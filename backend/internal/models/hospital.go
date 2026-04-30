@@ -13,9 +13,9 @@ type Hospital struct {
 	Name         string         `gorm:"not null" json:"name"`
 	Email        string         `gorm:"uniqueIndex" json:"email"`
 	PasswordHash string         `gorm:"not null" json:"-"`
-	Phone        string         `gorm:"not null" json:"phone"`
-	Address      string         `gorm:"not null" json:"address"`
-	City         string         `gorm:"not null" json:"city"`
+	Phone        string         `json:"phone"`
+	Address      string         `json:"address"`
+	City         string         `json:"city"`
 	State        string         `json:"state"`
 	Country      string         `gorm:"default:'India'" json:"country"`
 	Pincode      string         `json:"pincode"`

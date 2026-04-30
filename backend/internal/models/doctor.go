@@ -10,8 +10,8 @@ import (
 type Doctor struct {
 	ID             uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
 	MID            string         `gorm:"uniqueIndex;not null" json:"mid"`
-	FirstName      string         `gorm:"not null" json:"first_name"`
-	LastName       string         `gorm:"not null" json:"last_name"`
+	FirstName      string         `json:"first_name"`
+	LastName       string         `json:"last_name"`
 	Email          string         `gorm:"uniqueIndex;not null" json:"email"`
 	PasswordHash   string         `gorm:"not null" json:"-"`
 	Phone          string         `json:"phone"`
