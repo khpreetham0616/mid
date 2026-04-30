@@ -1,0 +1,30 @@
+# Environment / secrets
+backend/.env
+*.env
+
+# Go
+backend/vendor/
+backend/*.exe
+backend/mid-server
+
+# Node / React
+frontend/node_modules/
+frontend/build/
+frontend/.env.local
+
+# Logs
+backend/logs/
+
+# Runtime markers (local dev only)
+.mid_seeded
+.mid_tidy
+.mid_npm
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
