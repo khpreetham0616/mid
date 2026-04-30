@@ -47,13 +47,15 @@ function ProtectedRoute({
 }
 
 function DashboardRedirect() {
-  const { userType, isAuthenticated, isLoading } = useAuth();
+  const { userType, isAuthenticated, isLoading, logout } = useAuth();
   if (isLoading) return null;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (userType === 'patient') return <Navigate to="/patient/dashboard" replace />;
   if (userType === 'doctor') return <Navigate to="/doctor/dashboard" replace />;
   if (userType === 'hospital') return <Navigate to="/hospital/dashboard" replace />;
   if (userType === 'admin') return <Navigate to="/admin/dashboard" replace />;
+  // Authenticated but userType is unknown — clear stale auth to break any redirect loop
+  logout();
   return <Navigate to="/login" replace />;
 }
 

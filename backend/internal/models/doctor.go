@@ -14,7 +14,7 @@ type Doctor struct {
 	LastName       string         `gorm:"not null" json:"last_name"`
 	Email          string         `gorm:"uniqueIndex;not null" json:"email"`
 	PasswordHash   string         `gorm:"not null" json:"-"`
-	Phone          string         `gorm:"not null" json:"phone"`
+	Phone          string         `json:"phone"`
 	Specialization string         `gorm:"not null" json:"specialization"`
 	Qualification  string         `json:"qualification"`
 	ExperienceYrs  int            `json:"experience_years"`

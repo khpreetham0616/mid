@@ -35,7 +35,21 @@ export default function Register() {
     setLoading(true);
     setError('');
     try {
-      await authAPI.register({ ...form, user_type: userType });
+      const payload: Record<string, unknown> = { ...form, user_type: userType };
+      // Convert numeric fields from string to number (e.target.value is always string)
+      if (payload.experience_years !== undefined && payload.experience_years !== '')
+        payload.experience_years = parseInt(payload.experience_years as string, 10) || 0;
+      else
+        payload.experience_years = 0;
+      if (payload.consult_fee !== undefined && payload.consult_fee !== '')
+        payload.consult_fee = parseFloat(payload.consult_fee as string) || 0;
+      else
+        payload.consult_fee = 0;
+      if (payload.beds !== undefined && payload.beds !== '')
+        payload.beds = parseInt(payload.beds as string, 10) || 0;
+      else
+        payload.beds = 0;
+      await authAPI.register(payload);
       navigate('/login', { state: { registered: true } });
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } };

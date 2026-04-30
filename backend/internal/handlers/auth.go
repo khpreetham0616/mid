@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -57,6 +58,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	switch services.UserType(req.UserType) {
 	case services.UserTypePatient:
+		log.Printf("[register] patient: email=%s", req.Email)
 		p := &models.Patient{
 			FirstName:       req.FirstName,
 			LastName:        req.LastName,
@@ -70,12 +72,14 @@ func (h *AuthHandler) Register(c *gin.Context) {
 			ChronicDiseases: req.ChronicDiseases,
 		}
 		if err := h.authSvc.RegisterPatient(p, req.Password); err != nil {
+			log.Printf("[register] patient error: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 		c.JSON(http.StatusCreated, gin.H{"user_type": "patient", "mid": p.MID, "user": p})
 
 	case services.UserTypeDoctor:
+		log.Printf("[register] doctor: email=%s", req.Email)
 		d := &models.Doctor{
 			FirstName:      req.FirstName,
 			LastName:       req.LastName,
@@ -90,12 +94,14 @@ func (h *AuthHandler) Register(c *gin.Context) {
 			State:          req.State,
 		}
 		if err := h.authSvc.RegisterDoctor(d, req.Password); err != nil {
+			log.Printf("[register] doctor error: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 		c.JSON(http.StatusCreated, gin.H{"user_type": "doctor", "mid": d.MID, "user": d})
 
 	case services.UserTypeHospital:
+		log.Printf("[register] hospital: email=%s", req.Email)
 		hospitalType := req.HospitalType
 		if hospitalType == "" {
 			hospitalType = "General"
@@ -114,6 +120,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 			Facilities:  req.Facilities,
 		}
 		if err := h.authSvc.RegisterHospital(h2, req.Password); err != nil {
+			log.Printf("[register] hospital error: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}

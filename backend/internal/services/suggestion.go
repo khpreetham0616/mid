@@ -28,12 +28,14 @@ func NewSuggestionService(dr *repository.DoctorRepo, hr *repository.HospitalRepo
 
 func (s *SuggestionService) Suggest(symptoms []string) (*SuggestionResult, error) {
 	cacheKey := "suggest:" + strings.Join(symptoms, ",")
-
 	ctx := context.Background()
-	if cached, err := s.rdb.Get(ctx, cacheKey).Bytes(); err == nil {
-		var result SuggestionResult
-		if json.Unmarshal(cached, &result) == nil {
-			return &result, nil
+
+	if s.rdb != nil {
+		if cached, err := s.rdb.Get(ctx, cacheKey).Bytes(); err == nil {
+			var result SuggestionResult
+			if json.Unmarshal(cached, &result) == nil {
+				return &result, nil
+			}
 		}
 	}
 
@@ -47,8 +49,10 @@ func (s *SuggestionService) Suggest(symptoms []string) (*SuggestionResult, error
 	}
 
 	result := &SuggestionResult{Doctors: doctors, Hospitals: hospitals}
-	if data, err := json.Marshal(result); err == nil {
-		s.rdb.Set(ctx, cacheKey, data, 10*time.Minute)
+	if s.rdb != nil {
+		if data, err := json.Marshal(result); err == nil {
+			s.rdb.Set(ctx, cacheKey, data, 10*time.Minute)
+		}
 	}
 	return result, nil
 }

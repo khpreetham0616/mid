@@ -27,7 +27,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const stored = localStorage.getItem('mid_auth');
     if (stored) {
-      try { setAuthUser(JSON.parse(stored)); } catch { localStorage.removeItem('mid_auth'); }
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed?.token && parsed?.userType) {
+          setAuthUser(parsed);
+        } else {
+          localStorage.removeItem('mid_auth');
+        }
+      } catch { localStorage.removeItem('mid_auth'); }
     }
     setIsLoading(false);
   }, []);
