@@ -20,8 +20,22 @@ func Auth(authSvc *services.AuthService) gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
 			return
 		}
-		c.Set("patient_id", claims.PatientID)
+		c.Set("user_id", claims.UserID)
 		c.Set("mid", claims.MID)
+		c.Set("user_type", string(claims.UserType))
 		c.Next()
+	}
+}
+
+func RequireRole(roles ...services.UserType) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userType := services.UserType(c.GetString("user_type"))
+		for _, role := range roles {
+			if userType == role {
+				c.Next()
+				return
+			}
+		}
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "forbidden: insufficient permissions"})
 	}
 }

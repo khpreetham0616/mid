@@ -1,49 +1,63 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Patient } from '../types';
-import { authAPI } from '../services/api';
+import type { AuthUser, UserType, Patient, Doctor, Hospital } from '@/types';
 
 interface AuthContextType {
-  patient: Patient | null;
+  authUser: AuthUser | null;
   token: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  userType: UserType | null;
+  patient: Patient | null;
+  doctor: Doctor | null;
+  hospital: Hospital | null;
+  isLoading: boolean;
+  login: (data: AuthUser) => void;
   logout: () => void;
   isAuthenticated: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({
+  authUser: null, token: null, userType: null,
+  patient: null, doctor: null, hospital: null,
+  isLoading: true, login: () => {}, logout: () => {}, isAuthenticated: false,
+});
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [patient, setPatient] = useState<Patient | null>(() => {
-    const stored = localStorage.getItem('mid_patient');
-    return stored ? JSON.parse(stored) : null;
-  });
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem('mid_token'));
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = async (email: string, password: string) => {
-    const res = await authAPI.login(email, password);
-    const { token: t, patient: p } = res.data;
-    localStorage.setItem('mid_token', t);
-    localStorage.setItem('mid_patient', JSON.stringify(p));
-    setToken(t);
-    setPatient(p);
+  useEffect(() => {
+    const stored = localStorage.getItem('mid_auth');
+    if (stored) {
+      try { setAuthUser(JSON.parse(stored)); } catch { localStorage.removeItem('mid_auth'); }
+    }
+    setIsLoading(false);
+  }, []);
+
+  const login = (data: AuthUser) => {
+    setAuthUser(data);
+    localStorage.setItem('mid_auth', JSON.stringify(data));
   };
 
   const logout = () => {
-    localStorage.removeItem('mid_token');
-    localStorage.removeItem('mid_patient');
-    setToken(null);
-    setPatient(null);
+    setAuthUser(null);
+    localStorage.removeItem('mid_auth');
   };
 
   return (
-    <AuthContext.Provider value={{ patient, token, login, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{
+      authUser,
+      token: authUser?.token ?? null,
+      userType: authUser?.userType ?? null,
+      patient: authUser?.userType === 'patient' ? (authUser.user as Patient) : null,
+      doctor: authUser?.userType === 'doctor' ? (authUser.user as Doctor) : null,
+      hospital: authUser?.userType === 'hospital' ? (authUser.user as Hospital) : null,
+      isLoading,
+      login,
+      logout,
+      isAuthenticated: !!authUser,
+    }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
-};
+export const useAuth = () => useContext(AuthContext);

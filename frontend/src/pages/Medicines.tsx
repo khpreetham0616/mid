@@ -1,8 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { medicineAPI } from '../services/api';
-import { Medicine } from '../types';
+import { motion } from 'framer-motion';
+import PageLayout from '@/components/layout/PageLayout';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { medicineAPI } from '@/services/api';
+import type { Medicine } from '@/types';
 
-const Medicines: React.FC = () => {
+const CATEGORIES = ['All', 'Antibiotic', 'Analgesic', 'Antiviral', 'Antifungal', 'Cardiovascular', 'Diabetes', 'Vitamin', 'Supplement'];
+
+export default function Medicines() {
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -14,113 +22,120 @@ const Medicines: React.FC = () => {
     setLoading(true);
     try {
       const res = await medicineAPI.list({ page, limit: 12, search: search || undefined });
-      setMedicines(res.data.data || []);
-      setTotal(res.data.total || 0);
-    } catch {
-      setMedicines([]);
-    } finally {
-      setLoading(false);
-    }
+      setMedicines(res.data.data ?? []);
+      setTotal(res.data.total ?? 0);
+    } catch { setMedicines([]); } finally { setLoading(false); }
   };
 
   useEffect(() => { fetchMeds(); }, [page, search]);
 
+  const totalPages = Math.ceil(total / 12);
+
+  const handleSearch = () => { setSearch(searchInput); setPage(1); };
+
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h1 style={styles.title}>Medicine Directory</h1>
-        <p style={styles.sub}>{total} medicines listed</p>
+    <PageLayout>
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-extrabold text-slate-900 mb-2">
+          <i className="fas fa-pills mr-3 text-purple-500" />Medicine Directory
+        </h1>
+        <p className="text-slate-500">{total} medicines listed</p>
       </div>
 
-      <div style={styles.searchRow}>
-        <input
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') { setSearch(searchInput); setPage(1); } }}
-          placeholder="Search by name, category..."
-          style={styles.input}
-        />
-        <button onClick={() => { setSearch(searchInput); setPage(1); }} style={styles.searchBtn}>Search</button>
-        {search && <button onClick={() => { setSearch(''); setSearchInput(''); }} style={styles.clearBtn}>Clear</button>}
+      {/* Search */}
+      <div className="bg-white rounded-2xl border p-4 mb-6 space-y-4">
+        <div className="flex gap-3">
+          <Input
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSearch()}
+            placeholder="Search by name, category, manufacturer..."
+            className="flex-1"
+          />
+          <Button onClick={handleSearch} className="bg-purple-600 hover:bg-purple-700 text-white px-5">
+            <i className="fas fa-search mr-2" />Search
+          </Button>
+          {search && (
+            <Button variant="ghost" onClick={() => { setSearch(''); setSearchInput(''); setPage(1); }} className="text-slate-400">
+              <i className="fas fa-times" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {loading ? (
-        <div style={styles.loading}>Loading medicines...</div>
+        <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>
+      ) : medicines.length === 0 ? (
+        <div className="text-center py-20 text-slate-400">
+          <i className="fas fa-pills text-5xl mb-4" />
+          <p className="text-lg font-medium">No medicines found</p>
+          {search && <p className="text-sm mt-1">Try a different search term</p>}
+        </div>
       ) : (
-        <div style={styles.grid}>
-          {medicines.map((med) => (
-            <div key={med.id} style={styles.card}>
-              <div style={styles.cardTop}>
-                <div style={styles.icon}>💊</div>
-                <div style={{ ...styles.avail, color: med.is_available ? '#16A34A' : '#DC2626' }}>
-                  {med.is_available ? 'Available' : 'Unavailable'}
-                </div>
-              </div>
-              <h3 style={styles.name}>{med.name}</h3>
-              {med.generic_name && <div style={styles.generic}>{med.generic_name}</div>}
-              {med.category && (
-                <div style={styles.category}>{med.category}</div>
-              )}
-              {med.manufacturer && (
-                <div style={styles.meta}>🏭 {med.manufacturer}</div>
-              )}
-              {med.dosage && <div style={styles.meta}>📋 Dosage: {med.dosage}</div>}
-              {med.description && (
-                <p style={styles.desc}>{med.description.slice(0, 100)}{med.description.length > 100 ? '...' : ''}</p>
-              )}
-              <div style={styles.price}>₹{med.price}</div>
-              {med.side_effects && (
-                <div style={styles.sideEffects}>
-                  ⚠️ <span style={{ fontSize: 12, color: '#92400E' }}>{med.side_effects.slice(0, 80)}</span>
-                </div>
-              )}
+        <>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            {medicines.map((med, i) => (
+              <motion.div key={med.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
+                <Card className="card-hover h-full">
+                  <CardContent className="p-5 flex flex-col h-full">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="w-12 h-12 rounded-2xl bg-purple-100 flex items-center justify-center text-purple-600 flex-shrink-0">
+                        <i className="fas fa-capsules text-xl" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-slate-800 truncate">{med.name}</h3>
+                        {med.generic_name && <p className="text-xs text-slate-400 italic truncate">{med.generic_name}</p>}
+                      </div>
+                      <Badge variant={med.is_available ? 'success' : 'secondary'} className="text-xs flex-shrink-0">
+                        {med.is_available ? 'Available' : 'Unavailable'}
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-1.5 text-xs text-slate-500 mb-3 flex-1">
+                      {med.category && (
+                        <Badge variant="secondary" className="text-xs">{med.category}</Badge>
+                      )}
+                      {med.manufacturer && (
+                        <p className="mt-2"><i className="fas fa-industry mr-1.5 text-slate-400" />{med.manufacturer}</p>
+                      )}
+                      {med.dosage && <p><i className="fas fa-prescription-bottle mr-1.5 text-slate-400" />Dosage: {med.dosage}</p>}
+                      {med.description && (
+                        <p className="text-slate-500 leading-relaxed">
+                          {med.description.length > 100 ? `${med.description.slice(0, 100)}…` : med.description}
+                        </p>
+                      )}
+                    </div>
+
+                    {med.side_effects && (
+                      <div className="bg-amber-50 rounded-lg px-3 py-2 mb-3 border border-amber-100">
+                        <p className="text-xs text-amber-700"><i className="fas fa-exclamation-triangle mr-1.5" />
+                          {med.side_effects.length > 80 ? `${med.side_effects.slice(0, 80)}…` : med.side_effects}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="pt-3 border-t flex items-center justify-between mt-auto">
+                      <span className="text-xl font-extrabold text-green-600">₹{med.price}</span>
+                      {med.requires_prescription && (
+                        <Badge variant="warning" className="text-xs"><i className="fas fa-file-prescription mr-1" />Rx</Badge>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-2">
+              <Button variant="outline" disabled={page === 1} onClick={() => setPage(p => p - 1)}><i className="fas fa-chevron-left" /></Button>
+              <span className="flex items-center px-4 text-sm text-slate-600">Page {page} of {totalPages}</span>
+              <Button variant="outline" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}><i className="fas fa-chevron-right" /></Button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
-
-      {Math.ceil(total / 12) > 1 && (
-        <div style={styles.pagination}>
-          {Array.from({ length: Math.ceil(total / 12) }, (_, i) => i + 1).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPage(p)}
-              style={{ ...styles.pageBtn, ...(p === page ? styles.pageBtnActive : {}) }}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+    </PageLayout>
   );
-};
-
-const styles: Record<string, React.CSSProperties> = {
-  container: { padding: '40px 80px', maxWidth: 1300, margin: '0 auto' },
-  header: { marginBottom: 24 },
-  title: { fontSize: 32, fontWeight: 800, color: '#0F172A', marginBottom: 4 },
-  sub: { color: '#64748b', fontSize: 15 },
-  searchRow: { display: 'flex', gap: 10, marginBottom: 32 },
-  input: { padding: '10px 16px', borderRadius: 10, border: '1.5px solid #E2E8F0', fontSize: 14, width: 300, outline: 'none' },
-  searchBtn: { padding: '10px 24px', background: '#0EA5E9', color: '#fff', border: 'none', borderRadius: 10, cursor: 'pointer', fontSize: 14, fontWeight: 600 },
-  clearBtn: { padding: '10px 16px', background: '#F1F5F9', color: '#64748b', border: 'none', borderRadius: 10, cursor: 'pointer', fontSize: 14 },
-  loading: { textAlign: 'center', padding: 60, color: '#94A3B8' },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 18 },
-  card: { background: '#fff', borderRadius: 16, padding: 22, boxShadow: '0 2px 10px rgba(0,0,0,0.07)', border: '1px solid #F1F5F9' },
-  cardTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  icon: { fontSize: 32 },
-  avail: { fontSize: 12, fontWeight: 600 },
-  name: { fontSize: 17, fontWeight: 700, color: '#0F172A', marginBottom: 4 },
-  generic: { color: '#64748b', fontSize: 13, marginBottom: 8, fontStyle: 'italic' },
-  category: { display: 'inline-block', background: '#F0F9FF', color: '#0369A1', fontSize: 11, fontWeight: 600, padding: '2px 10px', borderRadius: 999, marginBottom: 10 },
-  meta: { color: '#64748b', fontSize: 12, marginBottom: 4 },
-  desc: { color: '#374151', fontSize: 13, lineHeight: 1.5, marginBottom: 10 },
-  price: { fontSize: 20, fontWeight: 800, color: '#0EA5E9', marginBottom: 8 },
-  sideEffects: { background: '#FFFBEB', borderRadius: 8, padding: '6px 10px' },
-  pagination: { display: 'flex', gap: 8, justifyContent: 'center', marginTop: 40 },
-  pageBtn: { padding: '8px 14px', border: '1.5px solid #E2E8F0', background: '#fff', borderRadius: 8, cursor: 'pointer', fontSize: 14 },
-  pageBtnActive: { background: '#0EA5E9', borderColor: '#0EA5E9', color: '#fff' },
-};
-
-export default Medicines;
+}

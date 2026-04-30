@@ -11,47 +11,152 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type AuthService struct {
-	patientRepo *repository.PatientRepo
-	jwtSecret   string
-}
+type UserType string
+
+const (
+	UserTypePatient  UserType = "patient"
+	UserTypeDoctor   UserType = "doctor"
+	UserTypeHospital UserType = "hospital"
+	UserTypeAdmin    UserType = "admin"
+)
 
 type Claims struct {
-	PatientID uuid.UUID `json:"patient_id"`
-	MID       string    `json:"mid"`
+	UserID   uuid.UUID `json:"user_id"`
+	MID      string    `json:"mid"`
+	UserType UserType  `json:"user_type"`
 	jwt.RegisteredClaims
 }
 
-func NewAuthService(pr *repository.PatientRepo, secret string) *AuthService {
-	return &AuthService{patientRepo: pr, jwtSecret: secret}
+type AuthService struct {
+	patientRepo   *repository.PatientRepo
+	doctorRepo    *repository.DoctorRepo
+	hospitalRepo  *repository.HospitalRepo
+	jwtSecret     string
+	adminEmail    string
+	adminPassword string
 }
 
-func (s *AuthService) Register(p *models.Patient, password string) error {
+func NewAuthService(
+	pr *repository.PatientRepo,
+	dr *repository.DoctorRepo,
+	hr *repository.HospitalRepo,
+	secret, adminEmail, adminPassword string,
+) *AuthService {
+	return &AuthService{
+		patientRepo:   pr,
+		doctorRepo:    dr,
+		hospitalRepo:  hr,
+		jwtSecret:     secret,
+		adminEmail:    adminEmail,
+		adminPassword: adminPassword,
+	}
+}
+
+func hashPassword(password string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	return string(hash), err
+}
+
+func checkPassword(hash, password string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) == nil
+}
+
+func validatePassword(password string) error {
+	if len(password) < 8 {
+		return errors.New("password must be at least 8 characters")
+	}
+	return nil
+}
+
+// --- Patient ---
+
+func (s *AuthService) RegisterPatient(p *models.Patient, password string) error {
+	if err := validatePassword(password); err != nil {
+		return err
+	}
+	hash, err := hashPassword(password)
 	if err != nil {
 		return err
 	}
-	p.PasswordHash = string(hash)
+	p.PasswordHash = hash
 	p.MID = GenerateMID(EntityPatient)
 	return s.patientRepo.Create(p)
 }
 
-func (s *AuthService) Login(email, password string) (string, *models.Patient, error) {
+func (s *AuthService) LoginPatient(email, password string) (string, *models.Patient, error) {
 	p, err := s.patientRepo.GetByEmail(email)
-	if err != nil {
+	if err != nil || !checkPassword(p.PasswordHash, password) {
 		return "", nil, errors.New("invalid credentials")
 	}
-	if err := bcrypt.CompareHashAndPassword([]byte(p.PasswordHash), []byte(password)); err != nil {
-		return "", nil, errors.New("invalid credentials")
-	}
-	token, err := s.generateToken(p)
+	token, err := s.generateToken(p.ID, p.MID, UserTypePatient)
 	return token, p, err
 }
 
-func (s *AuthService) generateToken(p *models.Patient) (string, error) {
+// --- Doctor ---
+
+func (s *AuthService) RegisterDoctor(d *models.Doctor, password string) error {
+	if err := validatePassword(password); err != nil {
+		return err
+	}
+	hash, err := hashPassword(password)
+	if err != nil {
+		return err
+	}
+	d.PasswordHash = hash
+	d.MID = GenerateMID(EntityDoctor)
+	return s.doctorRepo.Create(d)
+}
+
+func (s *AuthService) LoginDoctor(email, password string) (string, *models.Doctor, error) {
+	d, err := s.doctorRepo.GetByEmail(email)
+	if err != nil || !checkPassword(d.PasswordHash, password) {
+		return "", nil, errors.New("invalid credentials")
+	}
+	token, err := s.generateToken(d.ID, d.MID, UserTypeDoctor)
+	return token, d, err
+}
+
+// --- Hospital ---
+
+func (s *AuthService) RegisterHospital(h *models.Hospital, password string) error {
+	if err := validatePassword(password); err != nil {
+		return err
+	}
+	hash, err := hashPassword(password)
+	if err != nil {
+		return err
+	}
+	h.PasswordHash = hash
+	h.MID = GenerateMID(EntityHospital)
+	return s.hospitalRepo.Create(h)
+}
+
+func (s *AuthService) LoginHospital(email, password string) (string, *models.Hospital, error) {
+	h, err := s.hospitalRepo.GetByEmail(email)
+	if err != nil || !checkPassword(h.PasswordHash, password) {
+		return "", nil, errors.New("invalid credentials")
+	}
+	token, err := s.generateToken(h.ID, h.MID, UserTypeHospital)
+	return token, h, err
+}
+
+// --- Admin ---
+
+func (s *AuthService) LoginAdmin(email, password string) (string, error) {
+	if email != s.adminEmail || password != s.adminPassword {
+		return "", errors.New("invalid credentials")
+	}
+	adminID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
+	return s.generateToken(adminID, "ADMIN", UserTypeAdmin)
+}
+
+// --- Token ---
+
+func (s *AuthService) generateToken(userID uuid.UUID, mid string, userType UserType) (string, error) {
 	claims := &Claims{
-		PatientID: p.ID,
-		MID:       p.MID,
+		UserID:   userID,
+		MID:      mid,
+		UserType: userType,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

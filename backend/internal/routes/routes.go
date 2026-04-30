@@ -9,12 +9,14 @@ import (
 )
 
 func Setup(
+	authH *handlers.AuthHandler,
 	doctorH *handlers.DoctorHandler,
 	hospitalH *handlers.HospitalHandler,
 	patientH *handlers.PatientHandler,
 	appointmentH *handlers.AppointmentHandler,
 	suggestionH *handlers.SuggestionHandler,
 	medicineH *handlers.MedicineHandler,
+	adminH *handlers.AdminHandler,
 	authSvc *services.AuthService,
 ) *gin.Engine {
 	r := gin.Default()
@@ -28,10 +30,11 @@ func Setup(
 
 	api := r.Group("/api/v1")
 
-	// Public routes
-	api.POST("/auth/register", patientH.Register)
-	api.POST("/auth/login", patientH.Login)
+	// --- Auth (public) ---
+	api.POST("/auth/register", authH.Register)
+	api.POST("/auth/login", authH.Login)
 
+	// --- Public read routes ---
 	api.GET("/doctors", doctorH.List)
 	api.GET("/doctors/:id", doctorH.GetByID)
 	api.GET("/doctors/mid/:mid", doctorH.GetByMID)
@@ -41,37 +44,58 @@ func Setup(
 	api.GET("/hospitals/mid/:mid", hospitalH.GetByMID)
 
 	api.GET("/suggestions", suggestionH.Suggest)
-
 	api.GET("/medicines", medicineH.List)
 	api.GET("/medicines/:id", medicineH.GetByID)
-
 	api.GET("/appointments/:id", appointmentH.GetByID)
 	api.GET("/appointments/doctor/:doctor_id", appointmentH.GetDoctorSlots)
 
-	// Protected routes
+	// --- Authenticated routes ---
 	auth := api.Group("/")
 	auth.Use(middleware.Auth(authSvc))
 
-	auth.GET("/profile", patientH.GetProfile)
-	auth.PUT("/profile", patientH.UpdateProfile)
-	auth.GET("/medical-history", patientH.GetMedicalHistory)
-	auth.GET("/my-appointments", patientH.GetAppointments)
+	// Patient routes
+	patient := auth.Group("/patient")
+	patient.Use(middleware.RequireRole(services.UserTypePatient))
+	patient.GET("/profile", patientH.GetProfile)
+	patient.PUT("/profile", patientH.UpdateProfile)
+	patient.GET("/medical-history", patientH.GetMedicalHistory)
+	patient.GET("/appointments", patientH.GetAppointments)
+	patient.GET("/prescriptions", patientH.GetPrescriptions)
+	patient.POST("/appointments", appointmentH.Book)
+	patient.PATCH("/appointments/:id/status", appointmentH.UpdateStatus)
 
-	auth.POST("/appointments", appointmentH.Book)
-	auth.PATCH("/appointments/:id/status", appointmentH.UpdateStatus)
+	// Doctor routes
+	doctor := auth.Group("/doctor")
+	doctor.Use(middleware.RequireRole(services.UserTypeDoctor))
+	doctor.GET("/profile", doctorH.GetMyProfile)
+	doctor.PUT("/profile", doctorH.UpdateMyProfile)
+	doctor.GET("/appointments", doctorH.GetMyAppointments)
+	doctor.PATCH("/appointments/:id/status", appointmentH.UpdateStatus)
+	doctor.GET("/patient/:pmid", doctorH.LookupPatient)
+	doctor.POST("/records", doctorH.AddMedicalRecord)
+	doctor.POST("/prescriptions", doctorH.WritePrescription)
+	doctor.GET("/prescriptions", doctorH.GetMyPrescriptions)
 
-	auth.GET("/prescriptions", medicineH.GetPrescriptions)
+	// Hospital routes
+	hospital := auth.Group("/hospital")
+	hospital.Use(middleware.RequireRole(services.UserTypeHospital))
+	hospital.GET("/profile", hospitalH.GetMyProfile)
+	hospital.PUT("/profile", hospitalH.UpdateMyProfile)
+	hospital.GET("/doctors", hospitalH.GetMyDoctors)
+	hospital.POST("/doctors", hospitalH.AddDoctor)
+	hospital.DELETE("/doctors/:doctor_id", hospitalH.RemoveDoctor)
 
-	// Admin routes (doctor/hospital management)
-	admin := api.Group("/admin")
+	// Admin routes
+	admin := auth.Group("/admin")
+	admin.Use(middleware.RequireRole(services.UserTypeAdmin))
+	admin.GET("/users", adminH.GetAllUsers)
+	admin.GET("/stats", adminH.GetStats)
 	admin.POST("/doctors", doctorH.Create)
 	admin.PUT("/doctors/:id", doctorH.Update)
 	admin.DELETE("/doctors/:id", doctorH.Delete)
-
 	admin.POST("/hospitals", hospitalH.Create)
 	admin.PUT("/hospitals/:id", hospitalH.Update)
 	admin.DELETE("/hospitals/:id", hospitalH.Delete)
-
 	admin.POST("/medicines", medicineH.Create)
 
 	return r

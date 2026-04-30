@@ -8,22 +8,28 @@ import (
 )
 
 type MedicalRecord struct {
-	ID            uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
-	PatientID     uuid.UUID      `gorm:"type:uuid;not null" json:"patient_id"`
-	DoctorID      uuid.UUID      `gorm:"type:uuid;not null" json:"doctor_id"`
-	AppointmentID uuid.UUID      `gorm:"type:uuid" json:"appointment_id"`
-	Patient       *Patient       `gorm:"foreignKey:PatientID" json:"patient,omitempty"`
-	Doctor        *Doctor        `gorm:"foreignKey:DoctorID" json:"doctor,omitempty"`
-	Diagnosis     string         `gorm:"not null" json:"diagnosis"`
-	Symptoms      string         `json:"symptoms"`
-	Treatment     string         `json:"treatment"`
-	Notes         string         `json:"notes"`
-	Vitals        string         `json:"vitals"` // JSON: BP, temp, weight, etc.
-	LabReports    string         `json:"lab_reports"`
-	FollowUpDate  *time.Time     `json:"follow_up_date"`
-	CreatedAt     time.Time      `json:"created_at"`
-	UpdatedAt     time.Time      `json:"updated_at"`
-	DeletedAt     gorm.DeletedAt `gorm:"index" json:"-"`
+	ID             uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
+	PatientID      uuid.UUID      `gorm:"type:uuid;not null" json:"patient_id"`
+	DoctorID       uuid.UUID      `gorm:"type:uuid;not null" json:"doctor_id"`
+	AppointmentID  uuid.UUID      `gorm:"type:uuid" json:"appointment_id"`
+	Patient        *Patient       `gorm:"foreignKey:PatientID" json:"patient,omitempty"`
+	Doctor         *Doctor        `gorm:"foreignKey:DoctorID" json:"doctor,omitempty"`
+	RecordType     string         `gorm:"default:'consultation'" json:"record_type"` // consultation, surgery, emergency, lab_result, follow_up
+	Diagnosis      string         `gorm:"not null" json:"diagnosis"`
+	Symptoms       string         `json:"symptoms"`
+	Treatment      string         `json:"treatment"`
+	Notes          string         `json:"notes"`
+	Vitals         string         `json:"vitals"`
+	LabReports     string         `json:"lab_reports"`
+	// Surgery-specific fields
+	SurgeryType    string         `json:"surgery_type"`
+	SurgeryDate    *time.Time     `json:"surgery_date"`
+	AnesthesiaType string         `json:"anesthesia_type"`
+	SurgeonNotes   string         `json:"surgeon_notes"`
+	FollowUpDate   *time.Time     `json:"follow_up_date"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+	DeletedAt      gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 func (mr *MedicalRecord) BeforeCreate(tx *gorm.DB) error {

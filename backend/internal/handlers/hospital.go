@@ -8,15 +8,15 @@ import (
 	"github.com/google/uuid"
 	"github.com/mid/backend/internal/models"
 	"github.com/mid/backend/internal/repository"
-	"github.com/mid/backend/internal/services"
 )
 
 type HospitalHandler struct {
-	repo *repository.HospitalRepo
+	repo       *repository.HospitalRepo
+	doctorRepo *repository.DoctorRepo
 }
 
-func NewHospitalHandler(repo *repository.HospitalRepo) *HospitalHandler {
-	return &HospitalHandler{repo: repo}
+func NewHospitalHandler(repo *repository.HospitalRepo, doctorRepo *repository.DoctorRepo) *HospitalHandler {
+	return &HospitalHandler{repo: repo, doctorRepo: doctorRepo}
 }
 
 func (h *HospitalHandler) Create(c *gin.Context) {
@@ -25,7 +25,6 @@ func (h *HospitalHandler) Create(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	hospital.MID = services.GenerateMID(services.EntityHospital)
 	if err := h.repo.Create(&hospital); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -102,4 +101,85 @@ func (h *HospitalHandler) Delete(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "deleted"})
+}
+
+func (h *HospitalHandler) GetMyProfile(c *gin.Context) {
+	hospitalID := c.MustGet("user_id").(uuid.UUID)
+	hospital, err := h.repo.GetByID(hospitalID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "hospital not found"})
+		return
+	}
+	c.JSON(http.StatusOK, hospital)
+}
+
+func (h *HospitalHandler) UpdateMyProfile(c *gin.Context) {
+	hospitalID := c.MustGet("user_id").(uuid.UUID)
+	hospital, err := h.repo.GetByID(hospitalID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "hospital not found"})
+		return
+	}
+	if err := c.ShouldBindJSON(hospital); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	hospital.ID = hospitalID
+	if err := h.repo.Update(hospital); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, hospital)
+}
+
+func (h *HospitalHandler) GetMyDoctors(c *gin.Context) {
+	hospitalID := c.MustGet("user_id").(uuid.UUID)
+	doctors, err := h.repo.GetDoctors(hospitalID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": doctors})
+}
+
+func (h *HospitalHandler) AddDoctor(c *gin.Context) {
+	hospitalID := c.MustGet("user_id").(uuid.UUID)
+	var req struct {
+		DoctorMID string `json:"doctor_mid" binding:"required"`
+		Schedule  string `json:"schedule"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	doc, err := h.doctorRepo.GetByMID(req.DoctorMID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "doctor not found"})
+		return
+	}
+	dh := &models.DoctorHospital{
+		DoctorID:     doc.ID,
+		HospitalID:   hospitalID,
+		Schedule:     req.Schedule,
+		IsAffiliated: true,
+	}
+	if err := h.doctorRepo.AssignToHospital(dh); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "doctor added to hospital", "doctor": doc})
+}
+
+func (h *HospitalHandler) RemoveDoctor(c *gin.Context) {
+	hospitalID := c.MustGet("user_id").(uuid.UUID)
+	doctorID, err := uuid.Parse(c.Param("doctor_id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid doctor id"})
+		return
+	}
+	if err := h.doctorRepo.RemoveFromHospital(doctorID, hospitalID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "doctor removed from hospital"})
 }

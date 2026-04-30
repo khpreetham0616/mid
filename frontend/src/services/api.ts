@@ -6,8 +6,13 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('mid_token');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  const stored = localStorage.getItem('mid_auth');
+  if (stored) {
+    try {
+      const { token } = JSON.parse(stored);
+      if (token) config.headers.Authorization = `Bearer ${token}`;
+    } catch {}
+  }
   return config;
 });
 
@@ -15,8 +20,7 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      localStorage.removeItem('mid_token');
-      localStorage.removeItem('mid_patient');
+      localStorage.removeItem('mid_auth');
       window.location.href = '/login';
     }
     return Promise.reject(err);
@@ -24,15 +28,26 @@ api.interceptors.response.use(
 );
 
 export const authAPI = {
-  register: (data: any) => api.post('/auth/register', data),
-  login: (email: string, password: string) => api.post('/auth/login', { email, password }),
+  register: (data: Record<string, unknown>) => api.post('/auth/register', data),
+  login: (data: { user_type: string; email: string; password: string }) =>
+    api.post('/auth/login', data),
 };
 
 export const doctorAPI = {
-  list: (params?: { page?: number; limit?: number; specialization?: string }) =>
+  list: (params?: { page?: number; limit?: number; specialization?: string; city?: string }) =>
     api.get('/doctors', { params }),
   getById: (id: string) => api.get(`/doctors/${id}`),
   getByMID: (mid: string) => api.get(`/doctors/mid/${mid}`),
+  // Doctor-role endpoints
+  myProfile: () => api.get('/doctor/profile'),
+  updateProfile: (data: Record<string, unknown>) => api.put('/doctor/profile', data),
+  myAppointments: () => api.get('/doctor/appointments'),
+  lookupPatient: (pmid: string) => api.get(`/doctor/patient/${pmid}`),
+  addRecord: (data: Record<string, unknown>) => api.post('/doctor/records', data),
+  writePrescription: (data: Record<string, unknown>) => api.post('/doctor/prescriptions', data),
+  myPrescriptions: () => api.get('/doctor/prescriptions'),
+  updateAppointmentStatus: (id: string, status: string, notes?: string) =>
+    api.patch(`/appointments/${id}/status`, { status, doctor_notes: notes }),
 };
 
 export const hospitalAPI = {
@@ -40,6 +55,30 @@ export const hospitalAPI = {
     api.get('/hospitals', { params }),
   getById: (id: string) => api.get(`/hospitals/${id}`),
   getByMID: (mid: string) => api.get(`/hospitals/mid/${mid}`),
+  // Hospital-role endpoints
+  myProfile: () => api.get('/hospital/profile'),
+  updateProfile: (data: Record<string, unknown>) => api.put('/hospital/profile', data),
+  myDoctors: () => api.get('/hospital/doctors'),
+  addDoctor: (data: { doctor_mid: string; schedule?: string }) =>
+    api.post('/hospital/doctors', data),
+  removeDoctor: (doctorId: string) => api.delete(`/hospital/doctors/${doctorId}`),
+};
+
+export const patientAPI = {
+  getProfile: () => api.get('/patient/profile'),
+  updateProfile: (data: Record<string, unknown>) => api.put('/patient/profile', data),
+  getMedicalHistory: () => api.get('/patient/medical-history'),
+  getAppointments: () => api.get('/patient/appointments'),
+  getPrescriptions: () => api.get('/patient/prescriptions'),
+};
+
+export const appointmentAPI = {
+  book: (data: Record<string, unknown>) => api.post('/patient/appointments', data),
+  getById: (id: string) => api.get(`/appointments/${id}`),
+  getDoctorSlots: (doctorId: string, date?: string) =>
+    api.get(`/appointments/doctor/${doctorId}`, { params: { date } }),
+  updateStatus: (id: string, status: string, notes?: string) =>
+    api.patch(`/appointments/${id}/status`, { status, doctor_notes: notes }),
 };
 
 export const suggestionAPI = {
@@ -47,27 +86,15 @@ export const suggestionAPI = {
     api.get('/suggestions', { params: { symptoms: symptoms.join(',') } }),
 };
 
-export const appointmentAPI = {
-  book: (data: any) => api.post('/appointments', data),
-  getById: (id: string) => api.get(`/appointments/${id}`),
-  getDoctorSlots: (doctorId: string, date?: string) =>
-    api.get(`/appointments/doctor/${doctorId}`, { params: { date } }),
-  updateStatus: (id: string, status: string, doctorNotes?: string) =>
-    api.patch(`/appointments/${id}/status`, { status, doctor_notes: doctorNotes }),
-  myAppointments: () => api.get('/my-appointments'),
-};
-
-export const patientAPI = {
-  getProfile: () => api.get('/profile'),
-  updateProfile: (data: any) => api.put('/profile', data),
-  getMedicalHistory: () => api.get('/medical-history'),
-};
-
 export const medicineAPI = {
   list: (params?: { page?: number; limit?: number; search?: string }) =>
     api.get('/medicines', { params }),
   getById: (id: string) => api.get(`/medicines/${id}`),
-  getPrescriptions: () => api.get('/prescriptions'),
+};
+
+export const adminAPI = {
+  getUsers: (type?: string) => api.get('/admin/users', { params: { type } }),
+  getStats: () => api.get('/admin/stats'),
 };
 
 export default api;

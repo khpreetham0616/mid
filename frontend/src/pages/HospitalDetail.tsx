@@ -1,26 +1,40 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { hospitalAPI } from '../services/api';
-import { Hospital } from '../types';
-import StarRating from '../components/common/StarRating';
-import Badge from '../components/common/Badge';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import PageLayout from '@/components/layout/PageLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { hospitalAPI } from '@/services/api';
+import type { Hospital } from '@/types';
 
-const HospitalDetail: React.FC = () => {
+export default function HospitalDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [hospital, setHospital] = useState<Hospital | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'doctors' | 'departments'>('overview');
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (!id) return;
-    hospitalAPI.getById(id)
-      .then((res) => setHospital(res.data))
-      .finally(() => setLoading(false));
+    hospitalAPI.getById(id).then(r => setHospital(r.data)).finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <div style={styles.loading}>Loading...</div>;
-  if (!hospital) return <div style={styles.loading}>Hospital not found</div>;
+  if (loading) return (
+    <PageLayout>
+      <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>
+    </PageLayout>
+  );
+
+  if (!hospital) return (
+    <PageLayout>
+      <div className="text-center py-20 text-slate-400">
+        <i className="fas fa-hospital text-5xl mb-4" />
+        <p className="text-lg font-medium">Hospital not found</p>
+        <Link to="/hospitals"><Button variant="outline" className="mt-4">Back to Hospitals</Button></Link>
+      </div>
+    </PageLayout>
+  );
 
   const parseFacilities = (raw: string): string[] => {
     try { return JSON.parse(raw); } catch { return raw ? raw.split(',').map(s => s.trim()) : []; }
@@ -33,156 +47,138 @@ const HospitalDetail: React.FC = () => {
   const departments = parseDepts(hospital.departments);
 
   return (
-    <div style={styles.container}>
-      <div style={styles.profileCard}>
-        <div style={styles.hospIconBig}>🏥</div>
-        <div style={styles.profileInfo}>
-          <div style={styles.midChip}>MID: {hospital.mid}</div>
-          <h1 style={styles.name}>{hospital.name}</h1>
-          <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
-            <Badge label={hospital.type} color="orange" />
-            {hospital.is_active ? <Badge label="Active" color="green" /> : <Badge label="Inactive" color="red" />}
-          </div>
-          <div style={styles.location}>📍 {hospital.address}, {hospital.city}, {hospital.state} - {hospital.pincode}</div>
-          <StarRating rating={hospital.rating} size={16} />
-          <div style={styles.contactRow}>
-            <span>📧 {hospital.email}</span>
-            <span>📞 {hospital.phone}</span>
-            <span>🛏 {hospital.beds} beds</span>
-          </div>
-        </div>
-      </div>
-
-      <div style={styles.tabs}>
-        {(['overview', 'doctors', 'departments'] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            style={{ ...styles.tab, ...(activeTab === tab ? styles.tabActive : {}) }}
-          >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </button>
-        ))}
-      </div>
-
-      <div style={styles.tabContent}>
-        {activeTab === 'overview' && (
-          <div>
-            <div style={styles.infoGrid}>
-              <div style={styles.infoCard}>
-                <div style={styles.infoLabel}>Type</div>
-                <div style={styles.infoValue}>{hospital.type}</div>
+    <PageLayout>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        {/* Profile Header */}
+        <Card className="mb-6 overflow-hidden">
+          <div className="h-28 bg-gradient-to-r from-emerald-500 to-emerald-700" />
+          <CardContent className="relative -mt-14 pb-6">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+              <div className="w-28 h-28 rounded-2xl bg-white border-4 border-white shadow-lg flex items-center justify-center text-4xl text-emerald-600 flex-shrink-0">
+                <i className="fas fa-hospital-alt" />
               </div>
-              <div style={styles.infoCard}>
-                <div style={styles.infoLabel}>Total Beds</div>
-                <div style={styles.infoValue}>{hospital.beds}</div>
-              </div>
-              <div style={styles.infoCard}>
-                <div style={styles.infoLabel}>City</div>
-                <div style={styles.infoValue}>{hospital.city}</div>
-              </div>
-              <div style={styles.infoCard}>
-                <div style={styles.infoLabel}>Country</div>
-                <div style={styles.infoValue}>{hospital.country}</div>
-              </div>
-            </div>
-            {facilities.length > 0 && (
-              <div style={{ marginTop: 24 }}>
-                <h3 style={styles.sectionTitle}>Facilities</h3>
-                <div style={styles.facilitiesGrid}>
-                  {facilities.map((f) => (
-                    <div key={f} style={styles.facilityItem}>✓ {f}</div>
-                  ))}
+              <div className="flex-1 pb-1">
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <Badge variant="hospital"><i className="fas fa-id-card mr-1" />{hospital.mid}</Badge>
+                  <Badge variant="secondary">{hospital.type}</Badge>
+                  {hospital.is_active ? <Badge variant="success">Active</Badge> : <Badge variant="secondary">Inactive</Badge>}
+                </div>
+                <h1 className="text-2xl font-extrabold text-slate-800">{hospital.name}</h1>
+                <div className="flex flex-wrap gap-4 mt-2 text-sm text-slate-500">
+                  {hospital.city && <span><i className="fas fa-map-marker-alt mr-1.5" />{hospital.city}{hospital.state ? `, ${hospital.state}` : ''}</span>}
+                  <span><i className="fas fa-procedures mr-1.5" />{hospital.beds} beds</span>
+                  <span className="text-amber-500"><i className="fas fa-star mr-1.5" />{hospital.rating.toFixed(1)}</span>
                 </div>
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          </CardContent>
+        </Card>
 
-        {activeTab === 'doctors' && (
-          <div>
-            <h3 style={styles.sectionTitle}>{hospital.doctors?.length || 0} Doctors</h3>
-            {hospital.doctors && hospital.doctors.length > 0 ? (
-              <div style={styles.doctorGrid}>
-                {hospital.doctors.map((doc) => (
-                  <div key={doc.id} style={styles.doctorCard} onClick={() => navigate(`/doctors/${doc.id}`)}>
-                    <div style={styles.docAvatar}>{doc.first_name[0]}{doc.last_name[0]}</div>
-                    <div>
-                      <div style={styles.docName}>Dr. {doc.first_name} {doc.last_name}</div>
-                      <div style={styles.docSpec}>{doc.specialization}</div>
-                      <div style={styles.docFee}>₹{doc.consult_fee}</div>
+        {/* Contact strip */}
+        <div className="flex flex-wrap gap-4 text-sm text-slate-500 bg-white rounded-xl border px-5 py-3 mb-6">
+          {hospital.email && <span><i className="fas fa-envelope mr-1.5 text-blue-400" />{hospital.email}</span>}
+          {hospital.phone && <span><i className="fas fa-phone mr-1.5 text-green-400" />{hospital.phone}</span>}
+          {hospital.address && <span><i className="fas fa-location-arrow mr-1.5 text-slate-400" />{hospital.address}{hospital.pincode ? ` - ${hospital.pincode}` : ''}</span>}
+        </div>
+
+        {/* Tabs */}
+        <Tabs defaultValue="overview">
+          <TabsList className="mb-6">
+            <TabsTrigger value="overview"><i className="fas fa-info-circle mr-1.5" />Overview</TabsTrigger>
+            <TabsTrigger value="doctors"><i className="fas fa-user-md mr-1.5" />Doctors ({hospital.doctors?.length ?? 0})</TabsTrigger>
+            <TabsTrigger value="departments"><i className="fas fa-building mr-1.5" />Departments ({departments.length})</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview">
+            <div className="grid sm:grid-cols-2 gap-4">
+              {[
+                { label: 'Hospital Type', value: hospital.type, icon: 'fa-hospital' },
+                { label: 'Total Beds', value: hospital.beds, icon: 'fa-procedures' },
+                { label: 'City', value: hospital.city, icon: 'fa-map-marker-alt' },
+                { label: 'Country', value: hospital.country || 'India', icon: 'fa-globe' },
+              ].map(item => (
+                <Card key={item.label}>
+                  <CardContent className="p-5">
+                    <p className="text-xs text-slate-400 uppercase tracking-wide mb-1"><i className={`fas ${item.icon} mr-1.5`} />{item.label}</p>
+                    <p className="text-lg font-bold text-slate-800">{item.value}</p>
+                  </CardContent>
+                </Card>
+              ))}
+
+              {facilities.length > 0 && (
+                <Card className="sm:col-span-2">
+                  <CardHeader><CardTitle className="text-base"><i className="fas fa-clinic-medical mr-2 text-blue-500" />Facilities</CardTitle></CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {facilities.map(f => (
+                        <Badge key={f} variant="outline" className="text-xs"><i className="fas fa-check mr-1 text-green-500" />{f}</Badge>
+                      ))}
                     </div>
-                    {doc.symptoms && doc.symptoms.length > 0 && (
-                      <div style={styles.docSymptoms}>
-                        {doc.symptoms.slice(0, 2).map((s) => (
-                          <span key={s.id} style={styles.symTag}>{s.name}</span>
-                        ))}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="doctors">
+            {!hospital.doctors || hospital.doctors.length === 0 ? (
+              <div className="text-center py-16 text-slate-400">
+                <i className="fas fa-user-md text-4xl mb-3" />
+                <p>No doctors listed</p>
+              </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {hospital.doctors.map((doc, i) => (
+                  <motion.div key={doc.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.04 }}>
+                    <Card className="card-hover cursor-pointer" onClick={() => navigate(`/doctors/${doc.id}`)}>
+                      <CardContent className="p-4 flex items-start gap-3">
+                        <div className="w-11 h-11 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold flex-shrink-0">
+                          {doc.first_name[0]}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-slate-800 truncate">Dr. {doc.first_name} {doc.last_name}</p>
+                          <p className="text-xs text-blue-600">{doc.specialization}</p>
+                          <div className="flex items-center gap-3 mt-1 text-xs text-slate-400">
+                            <span className="text-amber-500"><i className="fas fa-star mr-0.5" />{doc.rating?.toFixed(1)}</span>
+                            <span className="text-green-600 font-medium">₹{doc.consult_fee}</span>
+                          </div>
+                          {doc.symptoms && doc.symptoms.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                              {doc.symptoms.slice(0, 2).map(s => <Badge key={s.id} variant="secondary" className="text-xs">{s.name}</Badge>)}
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="departments">
+            {departments.length === 0 ? (
+              <div className="text-center py-16 text-slate-400">
+                <i className="fas fa-building text-4xl mb-3" />
+                <p>No departments listed</p>
+              </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {departments.map(d => (
+                  <Card key={d}>
+                    <CardContent className="p-5 text-center">
+                      <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center mx-auto mb-3 text-emerald-600">
+                        <i className="fas fa-stethoscope text-lg" />
                       </div>
-                    )}
-                  </div>
+                      <p className="font-semibold text-slate-800 text-sm">{d}</p>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
-            ) : (
-              <p style={{ color: '#94A3B8' }}>No doctors listed.</p>
             )}
-          </div>
-        )}
-
-        {activeTab === 'departments' && (
-          <div>
-            <h3 style={styles.sectionTitle}>Departments</h3>
-            {departments.length > 0 ? (
-              <div style={styles.deptGrid}>
-                {departments.map((d) => (
-                  <div key={d} style={styles.deptCard}>
-                    <div style={styles.deptIcon}>🏨</div>
-                    <div style={styles.deptName}>{d}</div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p style={{ color: '#94A3B8' }}>No departments listed.</p>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
+          </TabsContent>
+        </Tabs>
+      </motion.div>
+    </PageLayout>
   );
-};
-
-const styles: Record<string, React.CSSProperties> = {
-  container: { padding: '40px 80px', maxWidth: 1100, margin: '0 auto' },
-  loading: { textAlign: 'center', padding: 80, color: '#94A3B8', fontSize: 18 },
-  profileCard: { display: 'flex', gap: 32, background: '#fff', borderRadius: 20, padding: 32, boxShadow: '0 4px 20px rgba(0,0,0,0.08)', marginBottom: 32 },
-  hospIconBig: { fontSize: 80, flexShrink: 0 },
-  profileInfo: { flex: 1 },
-  midChip: { fontFamily: 'monospace', fontSize: 12, color: '#94A3B8', background: '#F8FAFC', padding: '2px 10px', borderRadius: 4, display: 'inline-block', marginBottom: 8 },
-  name: { fontSize: 28, fontWeight: 800, color: '#0F172A', marginBottom: 12 },
-  location: { color: '#64748b', fontSize: 14, marginBottom: 10 },
-  contactRow: { display: 'flex', gap: 20, marginTop: 14, color: '#64748b', fontSize: 13, flexWrap: 'wrap' },
-  tabs: { display: 'flex', gap: 4, marginBottom: 24, borderBottom: '1.5px solid #E2E8F0' },
-  tab: { padding: '10px 24px', background: 'transparent', border: 'none', borderBottom: '2px solid transparent', color: '#64748b', fontSize: 15, fontWeight: 600, cursor: 'pointer', marginBottom: -1.5 },
-  tabActive: { borderBottomColor: '#0EA5E9', color: '#0EA5E9' },
-  tabContent: { background: '#fff', borderRadius: 16, padding: 28, boxShadow: '0 2px 10px rgba(0,0,0,0.05)' },
-  sectionTitle: { fontSize: 18, fontWeight: 700, color: '#0F172A', marginBottom: 16 },
-  infoGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 },
-  infoCard: { background: '#F8FAFC', borderRadius: 12, padding: '16px 20px' },
-  infoLabel: { fontSize: 12, color: '#94A3B8', marginBottom: 4, textTransform: 'uppercase' },
-  infoValue: { fontSize: 16, fontWeight: 600, color: '#0F172A' },
-  facilitiesGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 },
-  facilityItem: { background: '#F0FDF4', color: '#15803D', padding: '8px 14px', borderRadius: 8, fontSize: 13, fontWeight: 500 },
-  doctorGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 14 },
-  doctorCard: { display: 'flex', flexDirection: 'column', gap: 6, background: '#F8FAFC', borderRadius: 12, padding: 16, cursor: 'pointer', border: '1px solid #E2E8F0' },
-  docAvatar: { width: 48, height: 48, borderRadius: '50%', background: '#E0F2FE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#0EA5E9', fontSize: 18, marginBottom: 8 },
-  docName: { fontWeight: 700, color: '#0F172A', fontSize: 14 },
-  docSpec: { color: '#64748b', fontSize: 12 },
-  docFee: { color: '#0EA5E9', fontWeight: 600, fontSize: 13 },
-  docSymptoms: { display: 'flex', flexWrap: 'wrap', gap: 4 },
-  symTag: { background: '#F0FDF4', color: '#15803D', padding: '2px 6px', borderRadius: 999, fontSize: 11 },
-  deptGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12 },
-  deptCard: { background: '#F0F9FF', borderRadius: 12, padding: '20px 16px', textAlign: 'center' },
-  deptIcon: { fontSize: 28, marginBottom: 8 },
-  deptName: { fontWeight: 600, color: '#0369A1', fontSize: 14 },
-};
-
-export default HospitalDetail;
+}

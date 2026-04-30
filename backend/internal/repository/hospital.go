@@ -30,6 +30,12 @@ func (r *HospitalRepo) GetByMID(mid string) (*models.Hospital, error) {
 	return &h, err
 }
 
+func (r *HospitalRepo) GetByEmail(email string) (*models.Hospital, error) {
+	var h models.Hospital
+	err := r.db.First(&h, "email = ?", email).Error
+	return &h, err
+}
+
 func (r *HospitalRepo) List(page, limit int, city string) ([]models.Hospital, int64, error) {
 	var hospitals []models.Hospital
 	var total int64
@@ -58,6 +64,12 @@ func (r *HospitalRepo) SearchBySymptoms(symptomNames []string) ([]models.Hospita
 		Order("hospitals.rating DESC").
 		Find(&hospitals).Error
 	return hospitals, err
+}
+
+func (r *HospitalRepo) GetDoctors(hospitalID uuid.UUID) ([]models.Doctor, error) {
+	var hospital models.Hospital
+	err := r.db.Preload("Doctors").Preload("Doctors.Symptoms").First(&hospital, "id = ?", hospitalID).Error
+	return hospital.Doctors, err
 }
 
 func (r *HospitalRepo) Update(h *models.Hospital) error {

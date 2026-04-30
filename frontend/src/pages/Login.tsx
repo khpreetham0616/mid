@@ -1,8 +1,22 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { motion } from 'framer-motion';
+import { authAPI } from '@/services/api';
+import { useAuth } from '@/context/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import type { UserType } from '@/types';
 
-const Login: React.FC = () => {
+const userTypes = [
+  { value: 'patient' as UserType, label: 'Patient', icon: 'fa-user-injured', active: 'border-teal-500 bg-teal-50 text-teal-700' },
+  { value: 'doctor' as UserType, label: 'Doctor', icon: 'fa-user-md', active: 'border-indigo-500 bg-indigo-50 text-indigo-700' },
+  { value: 'hospital' as UserType, label: 'Hospital', icon: 'fa-hospital', active: 'border-emerald-500 bg-emerald-50 text-emerald-700' },
+  { value: 'admin' as UserType, label: 'Admin', icon: 'fa-user-shield', active: 'border-rose-500 bg-rose-50 text-rose-700' },
+];
+
+export default function Login() {
+  const [userType, setUserType] = useState<UserType>('patient');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -12,74 +26,70 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
+    setLoading(true);
     try {
-      await login(email, password);
+      const res = await authAPI.login({ user_type: userType, email, password });
+      login({ token: res.data.token, userType: res.data.user_type, user: res.data.user });
       navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Login failed. Check credentials.');
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } };
+      setError(e.response?.data?.error ?? 'Invalid credentials. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  const selected = userTypes.find(t => t.value === userType)!;
+
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <div style={styles.logo}><span style={{ color: '#0EA5E9' }}>M</span>ID</div>
-        <h2 style={styles.title}>Welcome back</h2>
-        <p style={styles.sub}>Sign in to your MID account</p>
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.field}>
-            <label style={styles.label}>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="you@example.com"
-              style={styles.input}
-            />
+    <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
+      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md">
+        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+          <div className="gradient-primary p-8 text-white text-center">
+            <Link to="/" className="inline-flex items-center justify-center w-12 h-12 bg-white/20 rounded-xl mb-4 font-extrabold text-xl">M</Link>
+            <h1 className="text-2xl font-extrabold">Welcome back</h1>
+            <p className="text-blue-100 text-sm mt-1">Sign in to your MID account</p>
           </div>
-          <div style={styles.field}>
-            <label style={styles.label}>Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-              style={styles.input}
-            />
+          <div className="p-8">
+            <Label className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3 block">I am a...</Label>
+            <div className="grid grid-cols-4 gap-2 mb-6">
+              {userTypes.map(t => (
+                <button key={t.value} type="button" onClick={() => setUserType(t.value)}
+                  className={`flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 transition-all text-center text-xs font-semibold ${userType === t.value ? t.active + ' border-current' : 'border-slate-200 text-slate-500 hover:border-slate-300'}`}>
+                  <i className={`fas ${t.icon} text-sm`} />
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} required className="mt-1.5" />
+              </div>
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <Input id="password" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required className="mt-1.5" />
+              </div>
+
+              {error && (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
+                  <i className="fas fa-exclamation-circle" /> {error}
+                </div>
+              )}
+
+              <Button type="submit" className="w-full" variant="gradient" size="lg" disabled={loading}>
+                {loading ? <><i className="fas fa-spinner fa-spin mr-2" /> Signing in...</> : <><i className={`fas ${selected.icon} mr-2`} /> Sign In as {selected.label}</>}
+              </Button>
+            </form>
+
+            <p className="text-center text-sm text-slate-500 mt-6">
+              Don't have an account? <Link to="/register" className="text-blue-600 font-semibold hover:underline">Create MID</Link>
+            </p>
           </div>
-          {error && <div style={styles.error}>{error}</div>}
-          <button type="submit" disabled={loading} style={styles.btn}>
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
-        <p style={styles.footer}>
-          Don't have an account? <Link to="/register" style={styles.link}>Register</Link>
-        </p>
-      </div>
+        </div>
+      </motion.div>
     </div>
   );
-};
-
-const styles: Record<string, React.CSSProperties> = {
-  page: { minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC' },
-  card: { background: '#fff', borderRadius: 20, padding: '44px 40px', width: 400, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' },
-  logo: { fontSize: 28, fontWeight: 900, color: '#0F172A', marginBottom: 16, textAlign: 'center' },
-  title: { fontSize: 22, fontWeight: 800, color: '#0F172A', textAlign: 'center', marginBottom: 6 },
-  sub: { color: '#64748b', textAlign: 'center', fontSize: 14, marginBottom: 28 },
-  form: { display: 'flex', flexDirection: 'column', gap: 16 },
-  field: { display: 'flex', flexDirection: 'column', gap: 6 },
-  label: { fontSize: 13, fontWeight: 600, color: '#374151' },
-  input: { padding: '11px 14px', borderRadius: 10, border: '1.5px solid #E2E8F0', fontSize: 14, outline: 'none' },
-  error: { background: '#FEF2F2', color: '#B91C1C', padding: '10px 14px', borderRadius: 8, fontSize: 13 },
-  btn: { padding: '13px', background: '#0EA5E9', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer' },
-  footer: { textAlign: 'center', marginTop: 20, fontSize: 14, color: '#64748b' },
-  link: { color: '#0EA5E9', fontWeight: 600, textDecoration: 'none' },
-};
-
-export default Login;
+}

@@ -1,274 +1,170 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { doctorAPI } from '../services/api';
-import { Doctor } from '../types';
-import StarRating from '../components/common/StarRating';
-import Badge from '../components/common/Badge';
-import { useAuth } from '../context/AuthContext';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import PageLayout from '@/components/layout/PageLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { doctorAPI } from '@/services/api';
+import { useAuth } from '@/context/AuthContext';
+import type { Doctor } from '@/types';
 
-const DoctorDetail: React.FC = () => {
+export default function DoctorDetail() {
   const { id } = useParams<{ id: string }>();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'hospitals' | 'diseases'>('overview');
-  const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     if (!id) return;
-    doctorAPI.getById(id)
-      .then((res) => setDoctor(res.data))
-      .finally(() => setLoading(false));
+    doctorAPI.getById(id).then(r => setDoctor(r.data)).finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <div style={styles.loading}>Loading...</div>;
-  if (!doctor) return <div style={styles.loading}>Doctor not found</div>;
+  if (loading) return (
+    <PageLayout>
+      <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>
+    </PageLayout>
+  );
+
+  if (!doctor) return (
+    <PageLayout>
+      <div className="text-center py-20 text-slate-400">
+        <i className="fas fa-user-md text-5xl mb-4" />
+        <p className="text-lg font-medium">Doctor not found</p>
+        <Link to="/doctors"><Button variant="outline" className="mt-4">Back to Doctors</Button></Link>
+      </div>
+    </PageLayout>
+  );
 
   return (
-    <div style={styles.container}>
-      {/* Profile Header */}
-      <div style={styles.profileCard}>
-        <div style={styles.avatarWrap}>
-          {doctor.profile_image ? (
-            <img src={doctor.profile_image} alt={doctor.first_name} style={styles.avatar} />
-          ) : (
-            <div style={styles.avatarPlaceholder}>
-              {doctor.first_name[0]}{doctor.last_name[0]}
-            </div>
-          )}
-          {doctor.is_available && <div style={styles.availBadge}>Available</div>}
-        </div>
-        <div style={styles.profileInfo}>
-          <div style={styles.midChip}>MID: {doctor.mid}</div>
-          <h1 style={styles.name}>Dr. {doctor.first_name} {doctor.last_name}</h1>
-          <div style={{ display: 'flex', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
-            <Badge label={doctor.specialization} color="blue" />
-            <Badge label={`${doctor.experience_years} yrs exp`} color="green" />
-          </div>
-          <p style={styles.qualification}>{doctor.qualification}</p>
-          <StarRating rating={doctor.rating} size={16} />
-          <div style={styles.contactRow}>
-            <span>📧 {doctor.email}</span>
-            <span>📞 {doctor.phone}</span>
-            <span>💰 ₹{doctor.consult_fee} / consult</span>
-          </div>
-        </div>
-        <div style={styles.bookBox}>
-          <div style={styles.feeLabel}>Consultation Fee</div>
-          <div style={styles.feeValue}>₹{doctor.consult_fee}</div>
-          <button
-            onClick={() => isAuthenticated ? navigate(`/book/${doctor.id}`) : navigate('/login')}
-            style={styles.bookBtn}
-          >
-            Book Appointment
-          </button>
-          {!isAuthenticated && (
-            <p style={{ fontSize: 12, color: '#94A3B8', marginTop: 8, textAlign: 'center' }}>
-              Login required to book
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div style={styles.tabs}>
-        {(['overview', 'hospitals', 'diseases'] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            style={{ ...styles.tab, ...(activeTab === tab ? styles.tabActive : {}) }}
-          >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </button>
-        ))}
-      </div>
-
-      {/* Tab Content */}
-      <div style={styles.tabContent}>
-        {activeTab === 'overview' && (
-          <div>
-            {doctor.bio && (
-              <div style={styles.section}>
-                <h3 style={styles.sectionTitle}>About</h3>
-                <p style={styles.bio}>{doctor.bio}</p>
+    <PageLayout>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        {/* Profile Header */}
+        <Card className="mb-6 overflow-hidden">
+          <div className="h-28 bg-gradient-to-r from-indigo-500 to-indigo-700" />
+          <CardContent className="relative -mt-14 pb-6">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+              <div className="w-28 h-28 rounded-2xl bg-white border-4 border-white shadow-lg flex items-center justify-center text-4xl font-extrabold text-indigo-600 flex-shrink-0">
+                {doctor.first_name[0]}
               </div>
-            )}
-            <div style={styles.infoGrid}>
-              <div style={styles.infoCard}>
-                <div style={styles.infoLabel}>Specialization</div>
-                <div style={styles.infoValue}>{doctor.specialization}</div>
-              </div>
-              <div style={styles.infoCard}>
-                <div style={styles.infoLabel}>Experience</div>
-                <div style={styles.infoValue}>{doctor.experience_years} years</div>
-              </div>
-              <div style={styles.infoCard}>
-                <div style={styles.infoLabel}>Qualification</div>
-                <div style={styles.infoValue}>{doctor.qualification || 'N/A'}</div>
-              </div>
-              <div style={styles.infoCard}>
-                <div style={styles.infoLabel}>Status</div>
-                <div style={{ ...styles.infoValue, color: doctor.is_available ? '#16A34A' : '#DC2626' }}>
-                  {doctor.is_available ? 'Available' : 'Unavailable'}
+              <div className="flex-1 pb-1">
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <Badge variant="doctor"><i className="fas fa-id-card mr-1" />{doctor.mid}</Badge>
+                  <Badge variant={doctor.is_available ? 'success' : 'secondary'}>{doctor.is_available ? 'Available' : 'Busy'}</Badge>
+                </div>
+                <h1 className="text-2xl font-extrabold text-slate-800">Dr. {doctor.first_name} {doctor.last_name}</h1>
+                <p className="text-blue-600 font-medium">{doctor.specialization}</p>
+                <div className="flex flex-wrap gap-4 mt-2 text-sm text-slate-500">
+                  <span><i className="fas fa-graduation-cap mr-1.5" />{doctor.qualification || 'MBBS'}</span>
+                  <span><i className="fas fa-briefcase mr-1.5" />{doctor.experience_years} years exp</span>
+                  <span className="text-amber-500"><i className="fas fa-star mr-1.5" />{doctor.rating.toFixed(1)}</span>
+                  {doctor.city && <span><i className="fas fa-map-marker-alt mr-1.5" />{doctor.city}</span>}
                 </div>
               </div>
+              <div className="sm:pb-2 flex flex-col gap-2 items-start sm:items-end">
+                <div className="text-3xl font-extrabold text-green-600">₹{doctor.consult_fee}</div>
+                <p className="text-xs text-slate-400">per consultation</p>
+                {isAuthenticated ? (
+                  <Link to={`/patient/book/${doctor.id}`}>
+                    <Button className="bg-blue-600 hover:bg-blue-700 text-white"><i className="fas fa-calendar-plus mr-2" />Book Appointment</Button>
+                  </Link>
+                ) : (
+                  <Button onClick={() => navigate('/login')} className="bg-blue-600 hover:bg-blue-700 text-white"><i className="fas fa-calendar-plus mr-2" />Book Appointment</Button>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          </CardContent>
+        </Card>
 
-        {activeTab === 'hospitals' && (
-          <div>
-            <h3 style={styles.sectionTitle}>Affiliated Hospitals</h3>
-            {doctor.hospitals && doctor.hospitals.length > 0 ? (
-              <div style={styles.hospitalList}>
-                {doctor.hospitals.map((h) => (
-                  <div key={h.id} style={styles.hospitalCard} onClick={() => navigate(`/hospitals/${h.id}`)}>
-                    <div style={styles.hospIcon}>🏥</div>
-                    <div>
-                      <div style={styles.hospName}>{h.name}</div>
-                      <div style={styles.hospMeta}>{h.city}, {h.state}</div>
-                      <div style={styles.hospMeta}>MID: {h.mid}</div>
-                    </div>
-                    <StarRating rating={h.rating} />
-                  </div>
-                ))}
+        {/* Contact info strip */}
+        <div className="flex flex-wrap gap-4 text-sm text-slate-500 bg-white rounded-xl border px-5 py-3 mb-6">
+          {doctor.email && <span><i className="fas fa-envelope mr-1.5 text-blue-400" />{doctor.email}</span>}
+          {doctor.phone && <span><i className="fas fa-phone mr-1.5 text-green-400" />{doctor.phone}</span>}
+        </div>
+
+        {/* Tabs */}
+        <Tabs defaultValue="overview">
+          <TabsList className="mb-6">
+            <TabsTrigger value="overview"><i className="fas fa-info-circle mr-1.5" />Overview</TabsTrigger>
+            <TabsTrigger value="hospitals"><i className="fas fa-hospital mr-1.5" />Hospitals ({doctor.hospitals?.length ?? 0})</TabsTrigger>
+            <TabsTrigger value="conditions"><i className="fas fa-stethoscope mr-1.5" />Conditions ({doctor.symptoms?.length ?? 0})</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview">
+            <div className="grid sm:grid-cols-2 gap-4">
+              {doctor.bio && (
+                <Card className="sm:col-span-2">
+                  <CardHeader><CardTitle className="text-base"><i className="fas fa-user mr-2 text-indigo-500" />About</CardTitle></CardHeader>
+                  <CardContent><p className="text-slate-600 leading-relaxed">{doctor.bio}</p></CardContent>
+                </Card>
+              )}
+              {[
+                { label: 'Specialization', value: doctor.specialization, icon: 'fa-stethoscope' },
+                { label: 'Experience', value: `${doctor.experience_years} years`, icon: 'fa-briefcase' },
+                { label: 'Qualification', value: doctor.qualification || 'MBBS', icon: 'fa-graduation-cap' },
+                { label: 'Status', value: doctor.is_available ? 'Available' : 'Unavailable', icon: 'fa-circle', color: doctor.is_available ? 'text-green-600' : 'text-red-500' },
+              ].map(item => (
+                <Card key={item.label}>
+                  <CardContent className="p-5">
+                    <p className="text-xs text-slate-400 uppercase tracking-wide mb-1"><i className={`fas ${item.icon} mr-1.5`} />{item.label}</p>
+                    <p className={`text-lg font-bold ${item.color ?? 'text-slate-800'}`}>{item.value}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="hospitals">
+            {!doctor.hospitals || doctor.hospitals.length === 0 ? (
+              <div className="text-center py-16 text-slate-400">
+                <i className="fas fa-hospital text-4xl mb-3" />
+                <p>No hospital affiliations listed</p>
               </div>
             ) : (
-              <p style={{ color: '#94A3B8' }}>No hospital affiliations listed.</p>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'diseases' && (
-          <div>
-            <h3 style={styles.sectionTitle}>Diseases & Conditions Treated</h3>
-            {doctor.symptoms && doctor.symptoms.length > 0 ? (
-              <div style={styles.diseasesGrid}>
-                {doctor.symptoms.map((s) => (
-                  <div key={s.id} style={styles.diseaseCard}>
-                    <div style={styles.diseaseName}>{s.name}</div>
-                    {s.description && <div style={styles.diseaseDesc}>{s.description}</div>}
-                    {s.category && <Badge label={s.category} color="gray" />}
-                  </div>
+              <div className="space-y-3">
+                {doctor.hospitals.map(h => (
+                  <Card key={h.id} className="cursor-pointer card-hover" onClick={() => navigate(`/hospitals/${h.id}`)}>
+                    <CardContent className="p-4 flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 flex-shrink-0">
+                        <i className="fas fa-hospital text-lg" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-slate-800">{h.name}</p>
+                        <p className="text-sm text-slate-500"><i className="fas fa-map-marker-alt mr-1" />{h.city}{h.state ? `, ${h.state}` : ''}</p>
+                        <Badge variant="hospital" className="text-xs mt-1">{h.mid}</Badge>
+                      </div>
+                      <div className="text-amber-500 text-sm"><i className="fas fa-star mr-1" />{h.rating?.toFixed(1)}</div>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
-            ) : (
-              <p style={{ color: '#94A3B8' }}>No specific conditions listed.</p>
             )}
-          </div>
-        )}
-      </div>
-    </div>
+          </TabsContent>
+
+          <TabsContent value="conditions">
+            {!doctor.symptoms || doctor.symptoms.length === 0 ? (
+              <div className="text-center py-16 text-slate-400">
+                <i className="fas fa-stethoscope text-4xl mb-3" />
+                <p>No specific conditions listed</p>
+              </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {doctor.symptoms.map(s => (
+                  <Card key={s.id}>
+                    <CardContent className="p-4">
+                      <p className="font-bold text-slate-800 mb-1">{s.name}</p>
+                      {s.description && <p className="text-xs text-slate-500 leading-relaxed mb-2">{s.description}</p>}
+                      {s.category && <Badge variant="secondary" className="text-xs">{s.category}</Badge>}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </motion.div>
+    </PageLayout>
   );
-};
-
-const styles: Record<string, React.CSSProperties> = {
-  container: { padding: '40px 80px', maxWidth: 1100, margin: '0 auto' },
-  loading: { textAlign: 'center', padding: 80, color: '#94A3B8', fontSize: 18 },
-  profileCard: {
-    display: 'flex',
-    gap: 32,
-    background: '#fff',
-    borderRadius: 20,
-    padding: '32px',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-    marginBottom: 32,
-    alignItems: 'flex-start',
-  },
-  avatarWrap: { position: 'relative', flexShrink: 0 },
-  avatar: { width: 120, height: 120, borderRadius: '50%', objectFit: 'cover' },
-  avatarPlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: '50%',
-    background: '#E0F2FE',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: 36,
-    fontWeight: 800,
-    color: '#0EA5E9',
-  },
-  availBadge: {
-    position: 'absolute',
-    bottom: 4,
-    left: '50%',
-    transform: 'translateX(-50%)',
-    background: '#22C55E',
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: 700,
-    padding: '2px 8px',
-    borderRadius: 999,
-    whiteSpace: 'nowrap',
-  },
-  profileInfo: { flex: 1 },
-  midChip: { fontFamily: 'monospace', fontSize: 12, color: '#94A3B8', background: '#F8FAFC', padding: '2px 10px', borderRadius: 4, display: 'inline-block', marginBottom: 8 },
-  name: { fontSize: 28, fontWeight: 800, color: '#0F172A', marginBottom: 12 },
-  qualification: { color: '#64748b', fontSize: 14, marginBottom: 10 },
-  contactRow: { display: 'flex', gap: 20, marginTop: 14, color: '#64748b', fontSize: 13, flexWrap: 'wrap' },
-  bookBox: {
-    background: '#F8FAFC',
-    borderRadius: 16,
-    padding: '24px',
-    textAlign: 'center',
-    minWidth: 200,
-    flexShrink: 0,
-    border: '1.5px solid #E2E8F0',
-  },
-  feeLabel: { fontSize: 13, color: '#64748b', marginBottom: 4 },
-  feeValue: { fontSize: 28, fontWeight: 800, color: '#0EA5E9', marginBottom: 16 },
-  bookBtn: {
-    width: '100%',
-    padding: '12px',
-    background: '#0EA5E9',
-    color: '#fff',
-    border: 'none',
-    borderRadius: 10,
-    fontWeight: 700,
-    fontSize: 15,
-    cursor: 'pointer',
-  },
-  tabs: { display: 'flex', gap: 4, marginBottom: 24, borderBottom: '1.5px solid #E2E8F0' },
-  tab: {
-    padding: '10px 24px',
-    background: 'transparent',
-    border: 'none',
-    borderBottom: '2px solid transparent',
-    color: '#64748b',
-    fontSize: 15,
-    fontWeight: 600,
-    cursor: 'pointer',
-    marginBottom: -1.5,
-  },
-  tabActive: { borderBottomColor: '#0EA5E9', color: '#0EA5E9' },
-  tabContent: { background: '#fff', borderRadius: 16, padding: 28, boxShadow: '0 2px 10px rgba(0,0,0,0.05)' },
-  section: { marginBottom: 24 },
-  sectionTitle: { fontSize: 18, fontWeight: 700, color: '#0F172A', marginBottom: 12 },
-  bio: { color: '#374151', lineHeight: 1.65, fontSize: 15 },
-  infoGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 },
-  infoCard: { background: '#F8FAFC', borderRadius: 12, padding: '16px 20px' },
-  infoLabel: { fontSize: 12, color: '#94A3B8', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 },
-  infoValue: { fontSize: 16, fontWeight: 600, color: '#0F172A' },
-  hospitalList: { display: 'flex', flexDirection: 'column', gap: 12 },
-  hospitalCard: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 16,
-    padding: '16px 20px',
-    background: '#F8FAFC',
-    borderRadius: 12,
-    cursor: 'pointer',
-    transition: 'background 0.2s',
-    border: '1px solid #E2E8F0',
-  },
-  hospIcon: { fontSize: 28 },
-  hospName: { fontWeight: 700, color: '#0F172A', fontSize: 15 },
-  hospMeta: { color: '#64748b', fontSize: 13, marginTop: 2 },
-  diseasesGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14 },
-  diseaseCard: { background: '#F8FAFC', borderRadius: 12, padding: '16px', border: '1px solid #E2E8F0' },
-  diseaseName: { fontWeight: 700, color: '#0F172A', marginBottom: 6, fontSize: 14 },
-  diseaseDesc: { color: '#64748b', fontSize: 12, marginBottom: 8, lineHeight: 1.5 },
-};
-
-export default DoctorDetail;
+}

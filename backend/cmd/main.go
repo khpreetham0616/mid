@@ -34,18 +34,20 @@ func main() {
 	appointmentRepo := repository.NewAppointmentRepo(db)
 
 	// Services
-	authSvc := services.NewAuthService(patientRepo, cfg.JWTSecret)
+	authSvc := services.NewAuthService(patientRepo, doctorRepo, hospitalRepo, cfg.JWTSecret, cfg.AdminEmail, cfg.AdminPassword)
 	suggestionSvc := services.NewSuggestionService(doctorRepo, hospitalRepo, rdb)
 
 	// Handlers
-	doctorH := handlers.NewDoctorHandler(doctorRepo)
-	hospitalH := handlers.NewHospitalHandler(hospitalRepo)
-	patientH := handlers.NewPatientHandler(patientRepo, authSvc)
+	authH := handlers.NewAuthHandler(authSvc)
+	doctorH := handlers.NewDoctorHandler(doctorRepo, patientRepo, db)
+	hospitalH := handlers.NewHospitalHandler(hospitalRepo, doctorRepo)
+	patientH := handlers.NewPatientHandler(patientRepo)
 	appointmentH := handlers.NewAppointmentHandler(appointmentRepo)
 	suggestionH := handlers.NewSuggestionHandler(suggestionSvc)
 	medicineH := handlers.NewMedicineHandler(db)
+	adminH := handlers.NewAdminHandler(db)
 
-	r := routes.Setup(doctorH, hospitalH, patientH, appointmentH, suggestionH, medicineH, authSvc)
+	r := routes.Setup(authH, doctorH, hospitalH, patientH, appointmentH, suggestionH, medicineH, adminH, authSvc)
 
 	log.Printf("MID Server starting on :%s", cfg.ServerPort)
 	if err := r.Run(":" + cfg.ServerPort); err != nil {

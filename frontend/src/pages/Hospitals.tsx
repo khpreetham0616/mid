@@ -1,153 +1,148 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { hospitalAPI } from '../services/api';
-import { Hospital } from '../types';
-import StarRating from '../components/common/StarRating';
-import Badge from '../components/common/Badge';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import PageLayout from '@/components/layout/PageLayout';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { hospitalAPI } from '@/services/api';
+import { useAuth } from '@/context/AuthContext';
+import type { Hospital } from '@/types';
 
-const Hospitals: React.FC = () => {
+const TYPES = ['All', 'General', 'Specialty', 'Clinic', 'Multispecialty'];
+
+export default function Hospitals() {
+  const { patient } = useAuth();
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [city, setCity] = useState('');
-  const [cityInput, setCityInput] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const fetchHospitals = async () => {
     setLoading(true);
     try {
       const res = await hospitalAPI.list({ page, limit: 9, city: city || undefined });
-      setHospitals(res.data.data || []);
-      setTotal(res.data.total || 0);
-    } catch {
-      setHospitals([]);
-    } finally {
-      setLoading(false);
-    }
+      setHospitals(res.data.data ?? []);
+      setTotal(res.data.total ?? 0);
+    } catch { setHospitals([]); } finally { setLoading(false); }
   };
 
   useEffect(() => { fetchHospitals(); }, [page, city]);
-
-  const totalPages = Math.ceil(total / 9);
 
   const parseDepts = (raw: string): string[] => {
     try { return JSON.parse(raw); } catch { return raw ? raw.split(',').map(s => s.trim()) : []; }
   };
 
+  const filtered = typeFilter ? hospitals.filter(h => h.type === typeFilter) : hospitals;
+  const totalPages = Math.ceil(total / 9);
+
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <h1 style={styles.title}>Find a Hospital</h1>
-        <p style={styles.sub}>{total} hospitals listed</p>
+    <PageLayout>
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-extrabold text-slate-900 mb-2"><i className="fas fa-hospital mr-3 text-emerald-500" />Find a Hospital</h1>
+        <p className="text-slate-500">{total} hospitals available{city ? ` in ${city}` : ''}</p>
       </div>
 
-      <div style={styles.searchRow}>
-        <input
-          value={cityInput}
-          onChange={(e) => setCityInput(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') { setCity(cityInput); setPage(1); } }}
-          placeholder="Search by city..."
-          style={styles.input}
-        />
-        <button onClick={() => { setCity(cityInput); setPage(1); }} style={styles.searchBtn}>
-          Search
-        </button>
-        {city && (
-          <button onClick={() => { setCity(''); setCityInput(''); setPage(1); }} style={styles.clearBtn}>
-            Clear
-          </button>
-        )}
-      </div>
-
-      {loading ? (
-        <div style={styles.loading}>Loading hospitals...</div>
-      ) : (
-        <div style={styles.grid}>
-          {hospitals.map((h) => {
-            const depts = parseDepts(h.departments);
-            return (
-              <div key={h.id} style={styles.card} onClick={() => navigate(`/hospitals/${h.id}`)}>
-                <div style={styles.cardTop}>
-                  <div style={styles.hospIcon}>🏥</div>
-                  <div style={styles.midTag}>MID: {h.mid}</div>
-                </div>
-                <h3 style={styles.name}>{h.name}</h3>
-                <div style={{ marginBottom: 8 }}>
-                  <Badge label={h.type} color="orange" />
-                </div>
-                <div style={styles.location}>📍 {h.city}, {h.state}</div>
-                <div style={styles.meta}>
-                  <span>🛏 {h.beds} beds</span>
-                  <span>📞 {h.phone}</span>
-                </div>
-                <StarRating rating={h.rating} />
-                {depts.length > 0 && (
-                  <div style={styles.deptRow}>
-                    {depts.slice(0, 3).map((d) => (
-                      <span key={d} style={styles.deptTag}>{d}</span>
-                    ))}
-                    {depts.length > 3 && <span style={styles.deptTag}>+{depts.length - 3}</span>}
-                  </div>
-                )}
-                <div style={styles.doctorCount}>
-                  {h.doctors?.length || 0} doctors affiliated
-                </div>
-              </div>
-            );
-          })}
+      {/* Filters */}
+      <div className="bg-white rounded-2xl border p-4 mb-6 space-y-4">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-1">
+            <Input placeholder="Search by city..." value={city} onChange={e => { setCity(e.target.value); setPage(1); }} className="w-full" />
+          </div>
+          {patient?.city && (
+            <Button variant="outline" size="sm" onClick={() => { setCity(patient.city); setPage(1); }} className="text-teal-600 border-teal-200">
+              <i className="fas fa-map-marker-alt mr-1.5" />Near me ({patient.city})
+            </Button>
+          )}
+          {city && (
+            <Button variant="ghost" size="sm" onClick={() => { setCity(''); setPage(1); }} className="text-slate-400">
+              <i className="fas fa-times mr-1" />Clear
+            </Button>
+          )}
         </div>
-      )}
-
-      {totalPages > 1 && (
-        <div style={styles.pagination}>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPage(p)}
-              style={{ ...styles.pageBtn, ...(p === page ? styles.pageBtnActive : {}) }}
-            >
-              {p}
+        <div className="flex flex-wrap gap-2">
+          {TYPES.map(t => (
+            <button key={t} onClick={() => setTypeFilter(t === 'All' ? '' : t)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${(!typeFilter && t === 'All') || typeFilter === t ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-600 border-slate-200 hover:border-emerald-300'}`}>
+              {t}
             </button>
           ))}
         </div>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-20 text-slate-400">
+          <i className="fas fa-hospital text-5xl mb-4" />
+          <p className="text-lg font-medium">No hospitals found</p>
+        </div>
+      ) : (
+        <>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            {filtered.map((h, i) => {
+              const depts = parseDepts(h.departments);
+              return (
+                <motion.div key={h.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
+                  <Card className="card-hover cursor-pointer">
+                    <CardContent className="p-5">
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center flex-shrink-0 text-emerald-600">
+                          <i className="fas fa-hospital text-xl" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-slate-800 truncate">{h.name}</h3>
+                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                            <Badge variant="secondary" className="text-xs">{h.type}</Badge>
+                            {h.is_active && <Badge variant="success" className="text-xs">Active</Badge>}
+                          </div>
+                        </div>
+                        <Badge variant="hospital" className="text-xs flex-shrink-0">{h.mid}</Badge>
+                      </div>
+
+                      <div className="space-y-1.5 text-xs text-slate-500 mb-3">
+                        {h.city && <p><i className="fas fa-map-marker-alt mr-1.5 text-slate-400 w-3" />{h.city}{h.state ? `, ${h.state}` : ''}</p>}
+                        <div className="flex gap-4">
+                          <span><i className="fas fa-procedures mr-1.5 text-slate-400" />{h.beds} beds</span>
+                          <span className="text-amber-500"><i className="fas fa-star mr-1" />{h.rating.toFixed(1)}</span>
+                          <span><i className="fas fa-user-md mr-1.5 text-slate-400" />{h.doctors?.length ?? 0} doctors</span>
+                        </div>
+                      </div>
+
+                      {depts.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-3">
+                          {depts.slice(0, 3).map(d => <Badge key={d} variant="secondary" className="text-xs">{d}</Badge>)}
+                          {depts.length > 3 && <Badge variant="outline" className="text-xs">+{depts.length - 3}</Badge>}
+                        </div>
+                      )}
+
+                      <div className="pt-3 border-t">
+                        <Link to={`/hospitals/${h.id}`}>
+                          <Button variant="outline" size="sm" className="w-full text-xs">
+                            <i className="fas fa-eye mr-1.5" />View Details
+                          </Button>
+                        </Link>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-2">
+              <Button variant="outline" disabled={page === 1} onClick={() => setPage(p => p - 1)}><i className="fas fa-chevron-left" /></Button>
+              <span className="flex items-center px-4 text-sm text-slate-600">Page {page} of {totalPages}</span>
+              <Button variant="outline" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}><i className="fas fa-chevron-right" /></Button>
+            </div>
+          )}
+        </>
       )}
-    </div>
+    </PageLayout>
   );
-};
-
-const styles: Record<string, React.CSSProperties> = {
-  container: { padding: '40px 80px', maxWidth: 1300, margin: '0 auto' },
-  header: { marginBottom: 24 },
-  title: { fontSize: 32, fontWeight: 800, color: '#0F172A', marginBottom: 4 },
-  sub: { color: '#64748b', fontSize: 15 },
-  searchRow: { display: 'flex', gap: 10, marginBottom: 32 },
-  input: { padding: '10px 16px', borderRadius: 10, border: '1.5px solid #E2E8F0', fontSize: 14, width: 260, outline: 'none' },
-  searchBtn: { padding: '10px 24px', background: '#0EA5E9', color: '#fff', border: 'none', borderRadius: 10, cursor: 'pointer', fontSize: 14, fontWeight: 600 },
-  clearBtn: { padding: '10px 16px', background: '#F1F5F9', color: '#64748b', border: 'none', borderRadius: 10, cursor: 'pointer', fontSize: 14 },
-  loading: { textAlign: 'center', padding: 60, color: '#94A3B8' },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 },
-  card: {
-    background: '#fff',
-    borderRadius: 16,
-    padding: 24,
-    boxShadow: '0 2px 12px rgba(0,0,0,0.07)',
-    cursor: 'pointer',
-    border: '1px solid #F1F5F9',
-    transition: 'transform 0.2s',
-  },
-  cardTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  hospIcon: { fontSize: 36 },
-  midTag: { fontSize: 11, color: '#94A3B8', fontFamily: 'monospace', background: '#F8FAFC', padding: '2px 8px', borderRadius: 4 },
-  name: { fontSize: 18, fontWeight: 700, color: '#0F172A', marginBottom: 8 },
-  location: { color: '#64748b', fontSize: 13, marginBottom: 10 },
-  meta: { display: 'flex', gap: 20, color: '#64748b', fontSize: 13, marginBottom: 10 },
-  deptRow: { display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 10 },
-  deptTag: { background: '#F0F9FF', color: '#0369A1', fontSize: 11, padding: '2px 8px', borderRadius: 999 },
-  doctorCount: { marginTop: 10, fontSize: 13, color: '#64748b', fontWeight: 500 },
-  pagination: { display: 'flex', gap: 8, justifyContent: 'center', marginTop: 40 },
-  pageBtn: { padding: '8px 14px', border: '1.5px solid #E2E8F0', background: '#fff', borderRadius: 8, cursor: 'pointer', fontSize: 14 },
-  pageBtnActive: { background: '#0EA5E9', borderColor: '#0EA5E9', color: '#fff' },
-};
-
-export default Hospitals;
+}
