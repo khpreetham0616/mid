@@ -20,14 +20,14 @@ function getDisplayName(user: Patient | Doctor | Hospital | { email: string; nam
 }
 
 function getInitials(name: string) {
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  return name.split(' ').filter(Boolean).map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'M';
 }
 
 const userTypeConfig = {
-  patient: { label: 'Patient', color: 'patient' as const, icon: 'fa-user-injured' },
-  doctor: { label: 'Doctor', color: 'doctor' as const, icon: 'fa-user-md' },
-  hospital: { label: 'Hospital', color: 'hospital' as const, icon: 'fa-hospital' },
-  admin: { label: 'Admin', color: 'admin' as const, icon: 'fa-user-shield' },
+  patient: { label: 'Patient', avatarClass: 'bg-teal-100 text-teal-700', badgeClass: 'bg-teal-100 text-teal-700 border-teal-200', icon: 'fa-user-injured' },
+  doctor: { label: 'Doctor', avatarClass: 'bg-sky-100 text-sky-700', badgeClass: 'bg-sky-100 text-sky-700 border-sky-200', icon: 'fa-user-md' },
+  hospital: { label: 'Hospital', avatarClass: 'bg-emerald-100 text-emerald-700', badgeClass: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: 'fa-hospital' },
+  admin: { label: 'Admin', avatarClass: 'bg-violet-100 text-violet-700', badgeClass: 'bg-violet-100 text-violet-700 border-violet-200', icon: 'fa-user-shield' },
 };
 
 export default function Navbar() {
@@ -37,7 +37,7 @@ export default function Navbar() {
 
   const displayName = getDisplayName(authUser?.user ?? null, userType);
   const mid = getMID(authUser?.user ?? null);
-  const config = userType ? userTypeConfig[userType] : null;
+  const config = userType ? userTypeConfig[userType as keyof typeof userTypeConfig] : null;
 
   const handleLogout = () => {
     logout();
@@ -68,16 +68,16 @@ export default function Navbar() {
     ],
   };
 
-  const links = userType ? dashboardLinks[userType] ?? [] : [];
+  const links = userType ? (dashboardLinks[userType as keyof typeof dashboardLinks] ?? []) : [];
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 shadow-sm">
       <div className="container mx-auto px-4 flex h-16 items-center justify-between">
         {/* Logo */}
         <Link to={isAuthenticated ? '/dashboard' : '/'} className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 text-white text-sm font-bold shadow">M</div>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-sky-500 to-teal-600 text-white text-sm font-bold shadow">M</div>
           <span className="text-xl font-bold">
-            <span className="text-blue-600">MID</span>
+            <span className="text-sky-600">MID</span>
             <span className="text-slate-400 text-sm font-normal ml-1">System</span>
           </span>
         </Link>
@@ -89,7 +89,7 @@ export default function Navbar() {
               <Link
                 key={link.to}
                 to={link.to}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-slate-600 hover:text-sky-600 hover:bg-sky-50 transition-colors"
               >
                 <i className={`fas ${link.icon} text-xs`} />
                 {link.label}
@@ -99,12 +99,10 @@ export default function Navbar() {
         ) : (
           <div className="hidden md:flex items-center gap-1">
             {[
-              { to: '/doctors', label: 'Doctors' },
-              { to: '/hospitals', label: 'Hospitals' },
               { to: '/symptom-checker', label: 'Symptom Checker' },
               { to: '/medicines', label: 'Medicines' },
             ].map(link => (
-              <Link key={link.to} to={link.to} className="px-3 py-2 rounded-lg text-sm text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+              <Link key={link.to} to={link.to} className="px-3 py-2 rounded-lg text-sm text-slate-600 hover:text-sky-600 hover:bg-sky-50 transition-colors">
                 {link.label}
               </Link>
             ))}
@@ -120,19 +118,20 @@ export default function Navbar() {
                 className="flex items-center gap-2 rounded-xl px-3 py-2 hover:bg-slate-100 transition-colors"
               >
                 <Avatar className="h-8 w-8">
-                  <AvatarFallback className={
-                    config?.color === 'patient' ? 'bg-teal-100 text-teal-700' :
-                    config?.color === 'doctor' ? 'bg-indigo-100 text-indigo-700' :
-                    config?.color === 'hospital' ? 'bg-emerald-100 text-emerald-700' :
-                    'bg-rose-100 text-rose-700'
-                  }>
+                  <AvatarFallback className={config?.avatarClass ?? 'bg-sky-100 text-sky-700'}>
                     {getInitials(displayName)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="hidden md:block text-left">
-                  <p className="text-sm font-medium text-slate-800 leading-none">{displayName}</p>
+                  <p className="text-sm font-medium text-slate-800 leading-none">{displayName || 'User'}</p>
                   <p className="text-xs text-slate-400 mt-0.5">{mid}</p>
                 </div>
+                {config && (
+                  <span className={`hidden md:inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${config.badgeClass}`}>
+                    <i className={`fas ${config.icon} text-[10px]`} />
+                    {config.label}
+                  </span>
+                )}
                 <i className="fas fa-chevron-down text-xs text-slate-400 hidden md:block" />
               </button>
 
@@ -147,9 +146,14 @@ export default function Navbar() {
                     onMouseLeave={() => setMenuOpen(false)}
                   >
                     <div className="p-3 border-b">
-                      <p className="font-semibold text-sm text-slate-800">{displayName}</p>
+                      <p className="font-semibold text-sm text-slate-800">{displayName || 'User'}</p>
                       <p className="text-xs text-slate-400">{mid}</p>
-                      {config && <Badge variant={config.color} className="mt-1.5 text-xs">{config.label}</Badge>}
+                      {config && (
+                        <span className={`inline-flex items-center gap-1 mt-1.5 text-xs font-semibold px-2 py-0.5 rounded-full border ${config.badgeClass}`}>
+                          <i className={`fas ${config.icon} text-[10px]`} />
+                          {config.label}
+                        </span>
+                      )}
                     </div>
                     <div className="p-1">
                       <Link
@@ -173,7 +177,7 @@ export default function Navbar() {
           ) : (
             <div className="flex items-center gap-2">
               <Link to="/login">
-                <Button variant="ghost" size="sm">Sign In</Button>
+                <Button variant="ghost" size="sm" className="text-slate-600 hover:text-sky-600">Sign In</Button>
               </Link>
               <Link to="/register">
                 <Button size="sm" className="gradient-primary text-white">Get Started</Button>
@@ -198,15 +202,24 @@ export default function Navbar() {
             className="md:hidden border-t bg-white"
           >
             <div className="container mx-auto px-4 py-3 flex flex-col gap-1">
-              {(isAuthenticated ? links : [
-                { to: '/doctors', label: 'Doctors', icon: 'fa-stethoscope' },
-                { to: '/hospitals', label: 'Hospitals', icon: 'fa-hospital' },
-                { to: '/symptom-checker', label: 'Symptom Checker', icon: 'fa-diagnoses' },
-              ]).map((link: { to: string; label: string; icon: string }) => (
+              {isAuthenticated ? links.map(link => (
                 <Link
                   key={link.to}
                   to={link.to}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-blue-50"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-sky-50"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <i className={`fas ${link.icon} text-xs w-4`} />
+                  {link.label}
+                </Link>
+              )) : [
+                { to: '/symptom-checker', label: 'Symptom Checker', icon: 'fa-diagnoses' },
+                { to: '/medicines', label: 'Medicines', icon: 'fa-pills' },
+              ].map(link => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-sky-50"
                   onClick={() => setMenuOpen(false)}
                 >
                   <i className={`fas ${link.icon} text-xs w-4`} />

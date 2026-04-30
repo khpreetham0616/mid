@@ -58,7 +58,7 @@ export default function Doctors() {
         <div className="flex flex-wrap gap-2">
           {SPECS.map(s => (
             <button key={s} onClick={() => { setSpec(s === 'All' ? '' : s); setPage(1); }}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${(!spec && s === 'All') || spec === s ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'}`}>
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${(!spec && s === 'All') || spec === s ? 'bg-sky-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'}`}>
               {s}
             </button>
           ))}
@@ -80,7 +80,7 @@ export default function Doctors() {
                 <Card className="card-hover cursor-pointer">
                   <CardContent className="p-5">
                     <div className="flex items-start gap-3 mb-3">
-                      <div className="w-12 h-12 rounded-2xl bg-indigo-100 flex items-center justify-center text-xl font-bold text-indigo-600 flex-shrink-0">
+                      <div className="w-12 h-12 rounded-2xl bg-sky-100 flex items-center justify-center text-xl font-bold text-sky-600 flex-shrink-0">
                         {doc.first_name[0]}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -107,7 +107,7 @@ export default function Doctors() {
                       <span className="font-bold text-green-600">₹{doc.consult_fee}</span>
                       <div className="flex gap-2">
                         <Link to={`/doctors/${doc.id}`}><Button variant="outline" size="sm" className="text-xs">View</Button></Link>
-                        <Link to={`/patient/book/${doc.id}`}><Button size="sm" className="text-xs bg-blue-600 hover:bg-blue-700 text-white">Book</Button></Link>
+                        <Link to={`/patient/book/${doc.id}`}><Button size="sm" className="text-xs bg-sky-600 hover:bg-sky-700 text-white">Book</Button></Link>
                       </div>
                     </div>
                   </CardContent>

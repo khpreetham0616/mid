@@ -9,7 +9,7 @@ import type { UserType } from '@/types';
 
 const userTypes = [
   { value: 'patient' as UserType, label: 'Patient', icon: 'fa-user-injured', color: 'from-teal-500 to-teal-600', active: 'border-teal-500 bg-teal-50 text-teal-700', desc: 'Book appointments & track health' },
-  { value: 'doctor' as UserType, label: 'Doctor', icon: 'fa-user-md', color: 'from-indigo-500 to-indigo-600', active: 'border-indigo-500 bg-indigo-50 text-indigo-700', desc: 'Manage patients & write prescriptions' },
+  { value: 'doctor' as UserType, label: 'Doctor', icon: 'fa-user-md', color: 'from-sky-500 to-sky-600', active: 'border-sky-500 bg-sky-50 text-sky-700', desc: 'Manage patients & write prescriptions' },
   { value: 'hospital' as UserType, label: 'Hospital', icon: 'fa-hospital', color: 'from-emerald-500 to-emerald-600', active: 'border-emerald-500 bg-emerald-50 text-emerald-700', desc: 'Manage facility & doctors' },
 ];
 
@@ -68,7 +68,7 @@ export default function Register() {
           <div className="gradient-primary p-8 text-white text-center">
             <Link to="/" className="inline-flex items-center justify-center w-12 h-12 bg-white/20 rounded-xl mb-4 font-extrabold text-xl">M</Link>
             <h1 className="text-2xl font-extrabold">Create your MID</h1>
-            <p className="text-blue-100 text-sm mt-1">Your universal medical identity awaits</p>
+            <p className="text-sky-100 text-sm mt-1">Your universal medical identity awaits</p>
           </div>
 
           <div className="p-8">
@@ -202,7 +202,7 @@ export default function Register() {
             )}
 
             <p className="text-center text-sm text-slate-500 mt-6">
-              Already have an account? <Link to="/login" className="text-blue-600 font-semibold hover:underline">Sign In</Link>
+              Already have an account? <Link to="/login" className="text-sky-600 font-semibold hover:underline">Sign In</Link>
             </p>
           </div>
         </div>

@@ -9,16 +9,16 @@ const stagger = { show: { transition: { staggerChildren: 0.15 } } };
 
 const features = [
   { icon: 'fa-user-injured', color: 'from-teal-500 to-teal-600', title: 'P-MID — Patient', desc: 'Your universal medical identity. Book appointments, view prescriptions, track medical history, and find nearby doctors instantly.' },
-  { icon: 'fa-user-md', color: 'from-indigo-500 to-indigo-600', title: 'D-MID — Doctor', desc: 'Lookup patients by their P-MID, write digital prescriptions, manage appointments, and maintain complete medical records.' },
+  { icon: 'fa-user-md', color: 'from-sky-500 to-sky-600', title: 'D-MID — Doctor', desc: 'Lookup patients by their P-MID, write digital prescriptions, manage appointments, and maintain complete medical records.' },
   { icon: 'fa-hospital', color: 'from-emerald-500 to-emerald-600', title: 'H-MID — Hospital', desc: 'Manage affiliated doctors, departments, and hospital information. Connect healthcare professionals and patients seamlessly.' },
-  { icon: 'fa-user-shield', color: 'from-rose-500 to-rose-600', title: 'Super Admin', desc: 'Complete oversight of all users — patients, doctors, and hospitals — with system-wide analytics and management tools.' },
+  { icon: 'fa-user-shield', color: 'from-violet-500 to-violet-600', title: 'Super Admin', desc: 'Complete oversight of all users — patients, doctors, and hospitals — with system-wide analytics and management tools.' },
 ];
 
 const stats = [
-  { icon: 'fa-user-injured', value: '10,000+', label: 'Patients Registered', color: 'text-teal-400' },
-  { icon: 'fa-user-md', value: '1,200+', label: 'Verified Doctors', color: 'text-indigo-400' },
-  { icon: 'fa-hospital', value: '350+', label: 'Partner Hospitals', color: 'text-emerald-400' },
-  { icon: 'fa-file-medical', value: '50,000+', label: 'Records Secured', color: 'text-blue-400' },
+  { icon: 'fa-user-injured', value: '10,000+', label: 'Patients Registered', color: 'text-teal-500' },
+  { icon: 'fa-user-md', value: '1,200+', label: 'Verified Doctors', color: 'text-sky-500' },
+  { icon: 'fa-hospital', value: '350+', label: 'Partner Hospitals', color: 'text-emerald-500' },
+  { icon: 'fa-file-medical', value: '50,000+', label: 'Records Secured', color: 'text-sky-400' },
 ];
 
 const capabilities = [
@@ -56,7 +56,7 @@ export default function Landing() {
         <div className="container mx-auto px-4 py-24 lg:py-32 relative">
           <motion.div variants={stagger} initial="hidden" animate="show" className="max-w-4xl mx-auto text-center">
             <motion.div variants={fadeUp}>
-              <span className="inline-flex items-center gap-2 rounded-full bg-blue-500/20 border border-blue-400/30 px-4 py-1.5 text-sm text-blue-300 mb-6">
+              <span className="inline-flex items-center gap-2 rounded-full bg-sky-500/20 border border-sky-400/30 px-4 py-1.5 text-sm text-sky-300 mb-6">
                 <i className="fas fa-star text-xs" /> The Future of Healthcare Identity
               </span>
             </motion.div>
@@ -69,12 +69,12 @@ export default function Landing() {
             </motion.p>
             <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/register">
-                <Button size="lg" className="bg-white text-blue-700 hover:bg-blue-50 font-semibold shadow-xl w-full sm:w-auto">
+                <Button size="lg" className="bg-white text-sky-700 hover:bg-sky-50 font-semibold shadow-xl w-full sm:w-auto">
                   <i className="fas fa-user-plus mr-2" /> Create Your MID
                 </Button>
               </Link>
               <Link to="/login">
-                <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 w-full sm:w-auto">
+                <Button size="lg" className="bg-transparent border-2 border-white text-white hover:bg-white/15 w-full sm:w-auto">
                   <i className="fas fa-sign-in-alt mr-2" /> Sign In
                 </Button>
               </Link>
@@ -158,7 +158,7 @@ export default function Landing() {
                 transition={{ delay: i * 0.08 }}
                 className="flex gap-4 bg-white rounded-2xl p-6 border shadow-sm hover:shadow-md transition-shadow"
               >
-                <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center text-sky-600 flex-shrink-0">
                   <i className={`fas ${c.icon} text-sm`} />
                 </div>
                 <div>
@@ -176,15 +176,15 @@ export default function Landing() {
         <div className="container mx-auto px-4 text-center">
           <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}>
             <h2 className="text-4xl font-extrabold mb-4">Ready to get your MID?</h2>
-            <p className="text-blue-100 mb-8 max-w-lg mx-auto">Join thousands of patients, doctors, and hospitals already using MID for seamless healthcare.</p>
+            <p className="text-sky-100 mb-8 max-w-lg mx-auto">Join thousands of patients, doctors, and hospitals already using MID for seamless healthcare.</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/register">
-                <Button size="lg" className="bg-white text-blue-700 hover:bg-blue-50 font-bold shadow-xl w-full sm:w-auto">
+                <Button size="lg" className="bg-white text-sky-700 hover:bg-sky-50 font-bold shadow-xl w-full sm:w-auto">
                   <i className="fas fa-rocket mr-2" /> Get Started Free
                 </Button>
               </Link>
               <Link to="/symptom-checker">
-                <Button size="lg" variant="outline" className="border-white/40 text-white hover:bg-white/10 w-full sm:w-auto">
+                <Button size="lg" className="bg-transparent border-2 border-white text-white hover:bg-white/15 w-full sm:w-auto">
                   <i className="fas fa-diagnoses mr-2" /> Try Symptom Checker
                 </Button>
               </Link>

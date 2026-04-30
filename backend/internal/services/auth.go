@@ -150,6 +150,29 @@ func (s *AuthService) LoginAdmin(email, password string) (string, error) {
 	return s.generateToken(adminID, "ADMIN", UserTypeAdmin)
 }
 
+// --- Auto-detect login ---
+
+func (s *AuthService) LoginAuto(email, password string) (string, string, interface{}, error) {
+	if p, err := s.patientRepo.GetByEmail(email); err == nil && checkPassword(p.PasswordHash, password) {
+		token, err := s.generateToken(p.ID, p.MID, UserTypePatient)
+		return token, "patient", p, err
+	}
+	if d, err := s.doctorRepo.GetByEmail(email); err == nil && checkPassword(d.PasswordHash, password) {
+		token, err := s.generateToken(d.ID, d.MID, UserTypeDoctor)
+		return token, "doctor", d, err
+	}
+	if h, err := s.hospitalRepo.GetByEmail(email); err == nil && checkPassword(h.PasswordHash, password) {
+		token, err := s.generateToken(h.ID, h.MID, UserTypeHospital)
+		return token, "hospital", h, err
+	}
+	if email == s.adminEmail && password == s.adminPassword {
+		adminID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
+		token, err := s.generateToken(adminID, "ADMIN", UserTypeAdmin)
+		return token, "admin", map[string]string{"email": email, "name": "Super Admin", "mid": "ADMIN"}, err
+	}
+	return "", "", nil, errors.New("invalid credentials")
+}
+
 // --- Token ---
 
 func (s *AuthService) generateToken(userID uuid.UUID, mid string, userType UserType) (string, error) {

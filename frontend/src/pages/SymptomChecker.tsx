@@ -74,7 +74,7 @@ export default function SymptomChecker() {
             placeholder="e.g. Chest pain, Shortness of breath..."
             className="flex-1"
           />
-          <Button onClick={addSymptom} className="bg-blue-600 hover:bg-blue-700 text-white px-5">
+          <Button onClick={addSymptom} className="bg-sky-600 hover:bg-sky-700 text-white px-5">
             <i className="fas fa-plus mr-2" />Add
           </Button>
         </div>
@@ -132,7 +132,7 @@ export default function SymptomChecker() {
                     <Card className="card-hover cursor-pointer" onClick={() => navigate(`/doctors/${doc.id}`)}>
                       <CardContent className="p-5">
                         <div className="flex items-start gap-3 mb-3">
-                          <div className="w-12 h-12 rounded-2xl bg-indigo-100 flex items-center justify-center text-xl font-bold text-indigo-600 flex-shrink-0">
+                          <div className="w-12 h-12 rounded-2xl bg-sky-100 flex items-center justify-center text-xl font-bold text-sky-600 flex-shrink-0">
                             {doc.first_name[0]}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -146,7 +146,7 @@ export default function SymptomChecker() {
                           <span className="text-amber-500"><i className="fas fa-star mr-1" />{doc.rating.toFixed(1)}</span>
                           <span className="font-bold text-green-600">₹{doc.consult_fee}</span>
                         </div>
-                        <Button size="sm" className="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                        <Button size="sm" className="w-full text-xs bg-sky-600 hover:bg-sky-700 text-white"
                           onClick={e => { e.stopPropagation(); navigate(`/patient/book/${doc.id}`); }}>
                           <i className="fas fa-calendar-plus mr-1.5" />Book
                         </Button>

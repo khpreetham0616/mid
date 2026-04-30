@@ -25,7 +25,7 @@ export default function DoctorAppointments() {
 
   return (
     <PageLayout>
-      <h1 className="text-2xl font-extrabold text-slate-900 mb-6"><i className="fas fa-calendar-alt mr-2 text-indigo-500" />My Appointments</h1>
+      <h1 className="text-2xl font-extrabold text-slate-900 mb-6"><i className="fas fa-calendar-alt mr-2 text-sky-500" />My Appointments</h1>
       {loading ? (
         <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>
       ) : (
@@ -67,7 +67,7 @@ export default function DoctorAppointments() {
                                 </Button>
                               )}
                               {apt.status === 'confirmed' && (
-                                <Button size="sm" onClick={() => updateStatus(apt.id, 'completed')} className="bg-blue-600 hover:bg-blue-700 text-white text-xs">
+                                <Button size="sm" onClick={() => updateStatus(apt.id, 'completed')} className="bg-sky-600 hover:bg-sky-700 text-white text-xs">
                                   <i className="fas fa-check-double mr-1" />Complete
                                 </Button>
                               )}

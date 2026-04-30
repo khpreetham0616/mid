@@ -80,7 +80,7 @@ export default function PatientLookup() {
   return (
     <PageLayout>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-extrabold text-slate-900 mb-6"><i className="fas fa-search mr-2 text-indigo-500" />Patient Lookup</h1>
+        <h1 className="text-2xl font-extrabold text-slate-900 mb-6"><i className="fas fa-search mr-2 text-sky-500" />Patient Lookup</h1>
 
         {/* Search */}
         <Card className="mb-6">
@@ -111,7 +111,7 @@ export default function PatientLookup() {
           {result && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
               {/* Patient info */}
-              <Card className="mb-4 border-indigo-200 bg-indigo-50/30">
+              <Card className="mb-4 border-sky-200 bg-sky-50/30">
                 <CardContent className="p-5">
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-2xl bg-teal-100 flex items-center justify-center text-xl font-bold text-teal-600 flex-shrink-0">
@@ -133,8 +133,8 @@ export default function PatientLookup() {
                       )}
                     </div>
                     <div className="flex flex-col gap-2">
-                      <Button size="sm" onClick={() => setShowRecord(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs"><i className="fas fa-file-medical mr-1" />Add Record</Button>
-                      <Button size="sm" variant="outline" onClick={() => setShowRx(true)} className="text-xs border-indigo-300 text-indigo-600"><i className="fas fa-prescription mr-1" />Write Rx</Button>
+                      <Button size="sm" onClick={() => setShowRecord(true)} className="bg-sky-600 hover:bg-sky-700 text-white text-xs"><i className="fas fa-file-medical mr-1" />Add Record</Button>
+                      <Button size="sm" variant="outline" onClick={() => setShowRx(true)} className="text-xs border-sky-300 text-sky-600"><i className="fas fa-prescription mr-1" />Write Rx</Button>
                     </div>
                   </div>
                 </CardContent>
@@ -205,7 +205,7 @@ export default function PatientLookup() {
       {/* Add Medical Record Modal */}
       <Dialog open={showRecord} onOpenChange={setShowRecord}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle><i className="fas fa-file-medical mr-2 text-indigo-500" />Add Medical Record</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle><i className="fas fa-file-medical mr-2 text-sky-500" />Add Medical Record</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div>
               <Label>Record Type</Label>
@@ -232,7 +232,7 @@ export default function PatientLookup() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowRecord(false)}>Cancel</Button>
-            <Button onClick={submitRecord} disabled={recordLoading} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+            <Button onClick={submitRecord} disabled={recordLoading} className="bg-sky-600 hover:bg-sky-700 text-white">
               {recordLoading ? 'Saving...' : 'Save Record'}
             </Button>
           </DialogFooter>

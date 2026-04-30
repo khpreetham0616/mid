@@ -132,7 +132,7 @@ export default function HospitalDetail() {
                   <motion.div key={doc.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.04 }}>
                     <Card className="card-hover cursor-pointer" onClick={() => navigate(`/doctors/${doc.id}`)}>
                       <CardContent className="p-4 flex items-start gap-3">
-                        <div className="w-11 h-11 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold flex-shrink-0">
+                        <div className="w-11 h-11 rounded-xl bg-sky-100 flex items-center justify-center text-sky-600 font-bold flex-shrink-0">
                           {doc.first_name[0]}
                         </div>
                         <div className="flex-1 min-w-0">

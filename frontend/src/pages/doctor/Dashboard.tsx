@@ -25,19 +25,19 @@ export default function DoctorDashboard() {
   return (
     <PageLayout>
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-        <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg">
+        <div className="bg-gradient-to-r from-sky-500 to-sky-600 rounded-2xl p-6 text-white shadow-lg">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <p className="text-indigo-100 text-sm mb-1"><i className="fas fa-user-md mr-1" /> Doctor Dashboard</p>
+              <p className="text-sky-100 text-sm mb-1"><i className="fas fa-user-md mr-1" /> Doctor Dashboard</p>
               <h1 className="text-2xl font-extrabold">Dr. {doctor?.first_name} {doctor?.last_name}</h1>
               <div className="flex items-center gap-2 mt-2 flex-wrap">
                 <Badge variant="doctor" className="text-xs"><i className="fas fa-id-card mr-1" />{doctor?.mid}</Badge>
-                <span className="text-indigo-100 text-xs"><i className="fas fa-stethoscope mr-1" />{doctor?.specialization}</span>
-                {doctor?.city && <span className="text-indigo-100 text-xs"><i className="fas fa-map-marker-alt mr-1" />{doctor?.city}</span>}
+                <span className="text-sky-100 text-xs"><i className="fas fa-stethoscope mr-1" />{doctor?.specialization}</span>
+                {doctor?.city && <span className="text-sky-100 text-xs"><i className="fas fa-map-marker-alt mr-1" />{doctor?.city}</span>}
               </div>
             </div>
             <div className="flex gap-2">
-              <Link to="/doctor/patients"><Button size="sm" className="bg-white text-indigo-700 hover:bg-indigo-50"><i className="fas fa-search mr-1.5" />Patient Lookup</Button></Link>
+              <Link to="/doctor/patients"><Button size="sm" className="bg-white text-sky-700 hover:bg-sky-50"><i className="fas fa-search mr-1.5" />Patient Lookup</Button></Link>
               <Link to="/doctor/appointments"><Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white/10"><i className="fas fa-calendar mr-1.5" />Schedule</Button></Link>
             </div>
           </div>
@@ -47,7 +47,7 @@ export default function DoctorDashboard() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { icon: 'fa-calendar-day', label: "Today's Appointments", value: todayAppts.length, color: 'from-indigo-500 to-indigo-600' },
+          { icon: 'fa-calendar-day', label: "Today's Appointments", value: todayAppts.length, color: 'from-sky-500 to-sky-600' },
           { icon: 'fa-clock', label: 'Pending', value: pending, color: 'from-amber-500 to-amber-600' },
           { icon: 'fa-check-circle', label: 'Completed', value: completed, color: 'from-green-500 to-green-600' },
           { icon: 'fa-star', label: 'Rating', value: doctor?.rating.toFixed(1) ?? '—', color: 'from-yellow-400 to-yellow-500' },
@@ -65,7 +65,7 @@ export default function DoctorDashboard() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base"><i className="fas fa-calendar-day mr-2 text-indigo-500" />Today's Schedule</CardTitle>
+              <CardTitle className="text-base"><i className="fas fa-calendar-day mr-2 text-sky-500" />Today's Schedule</CardTitle>
               <Link to="/doctor/appointments"><Button variant="ghost" size="sm" className="text-xs">View all <i className="fas fa-arrow-right ml-1" /></Button></Link>
             </CardHeader>
             <CardContent>
@@ -101,7 +101,7 @@ export default function DoctorDashboard() {
             <CardHeader><CardTitle className="text-base"><i className="fas fa-bolt mr-2 text-amber-500" />Quick Actions</CardTitle></CardHeader>
             <CardContent className="space-y-2">
               {[
-                { to: '/doctor/patients', icon: 'fa-search', label: 'Lookup Patient by P-MID', color: 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100' },
+                { to: '/doctor/patients', icon: 'fa-search', label: 'Lookup Patient by P-MID', color: 'bg-sky-50 text-sky-700 hover:bg-sky-100' },
                 { to: '/doctor/appointments', icon: 'fa-calendar-alt', label: 'View All Appointments', color: 'bg-blue-50 text-blue-700 hover:bg-blue-100' },
                 { to: '/doctor/profile', icon: 'fa-user-edit', label: 'Update Profile', color: 'bg-slate-50 text-slate-700 hover:bg-slate-100' },
               ].map(a => (
@@ -117,7 +117,7 @@ export default function DoctorDashboard() {
           <Card className="mt-4">
             <CardContent className="p-5">
               <div className="text-center">
-                <div className="w-16 h-16 rounded-2xl bg-indigo-100 flex items-center justify-center text-2xl font-bold text-indigo-600 mx-auto mb-3">
+                <div className="w-16 h-16 rounded-2xl bg-sky-100 flex items-center justify-center text-2xl font-bold text-sky-600 mx-auto mb-3">
                   {doctor?.first_name?.[0]}{doctor?.last_name?.[0]}
                 </div>
                 <p className="font-bold text-slate-800">{doctor?.qualification}</p>

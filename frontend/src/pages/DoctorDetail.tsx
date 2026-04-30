@@ -43,10 +43,10 @@ export default function DoctorDetail() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         {/* Profile Header */}
         <Card className="mb-6 overflow-hidden">
-          <div className="h-28 bg-gradient-to-r from-indigo-500 to-indigo-700" />
+          <div className="h-28 bg-gradient-to-r from-sky-500 to-sky-600" />
           <CardContent className="relative -mt-14 pb-6">
             <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-              <div className="w-28 h-28 rounded-2xl bg-white border-4 border-white shadow-lg flex items-center justify-center text-4xl font-extrabold text-indigo-600 flex-shrink-0">
+              <div className="w-28 h-28 rounded-2xl bg-white border-4 border-white shadow-lg flex items-center justify-center text-4xl font-extrabold text-sky-600 flex-shrink-0">
                 {doctor.first_name[0]}
               </div>
               <div className="flex-1 pb-1">
@@ -68,10 +68,10 @@ export default function DoctorDetail() {
                 <p className="text-xs text-slate-400">per consultation</p>
                 {isAuthenticated ? (
                   <Link to={`/patient/book/${doctor.id}`}>
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white"><i className="fas fa-calendar-plus mr-2" />Book Appointment</Button>
+                    <Button className="bg-sky-600 hover:bg-sky-700 text-white"><i className="fas fa-calendar-plus mr-2" />Book Appointment</Button>
                   </Link>
                 ) : (
-                  <Button onClick={() => navigate('/login')} className="bg-blue-600 hover:bg-blue-700 text-white"><i className="fas fa-calendar-plus mr-2" />Book Appointment</Button>
+                  <Button onClick={() => navigate('/login')} className="bg-sky-600 hover:bg-sky-700 text-white"><i className="fas fa-calendar-plus mr-2" />Book Appointment</Button>
                 )}
               </div>
             </div>
@@ -96,7 +96,7 @@ export default function DoctorDetail() {
             <div className="grid sm:grid-cols-2 gap-4">
               {doctor.bio && (
                 <Card className="sm:col-span-2">
-                  <CardHeader><CardTitle className="text-base"><i className="fas fa-user mr-2 text-indigo-500" />About</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-base"><i className="fas fa-user mr-2 text-sky-500" />About</CardTitle></CardHeader>
                   <CardContent><p className="text-slate-600 leading-relaxed">{doctor.bio}</p></CardContent>
                 </Card>
               )}

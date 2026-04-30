@@ -36,15 +36,15 @@ export default function DoctorProfile() {
     <PageLayout>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-extrabold text-slate-900"><i className="fas fa-user-md mr-2 text-indigo-500" />My Profile</h1>
+          <h1 className="text-2xl font-extrabold text-slate-900"><i className="fas fa-user-md mr-2 text-sky-500" />My Profile</h1>
           {!editing && <Button onClick={() => setEditing(true)} variant="outline"><i className="fas fa-edit mr-2" />Edit</Button>}
         </div>
 
         <Card className="mb-6 overflow-hidden">
-          <div className="h-24 bg-gradient-to-r from-indigo-500 to-indigo-700" />
+          <div className="h-24 bg-gradient-to-r from-sky-500 to-sky-600" />
           <CardContent className="relative -mt-12 pb-6">
             <div className="flex items-end gap-4">
-              <div className="w-24 h-24 rounded-2xl bg-white border-4 border-white shadow-lg flex items-center justify-center text-3xl font-extrabold text-indigo-600">
+              <div className="w-24 h-24 rounded-2xl bg-white border-4 border-white shadow-lg flex items-center justify-center text-3xl font-extrabold text-sky-600">
                 {doctor.first_name?.[0]}{doctor.last_name?.[0]}
               </div>
               <div className="pb-2">

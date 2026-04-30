@@ -40,7 +40,7 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           {[
             { icon: 'fa-user-injured', label: 'Patients', value: stats.patients, color: 'from-teal-500 to-teal-600' },
-            { icon: 'fa-user-md', label: 'Doctors', value: stats.doctors, color: 'from-indigo-500 to-indigo-600' },
+            { icon: 'fa-user-md', label: 'Doctors', value: stats.doctors, color: 'from-sky-500 to-sky-600' },
             { icon: 'fa-hospital', label: 'Hospitals', value: stats.hospitals, color: 'from-emerald-500 to-emerald-600' },
             { icon: 'fa-calendar-check', label: 'Appointments', value: stats.appointments, color: 'from-blue-500 to-blue-600' },
             { icon: 'fa-pills', label: 'Medicines', value: stats.medicines, color: 'from-purple-500 to-purple-600' },
@@ -89,7 +89,7 @@ export default function AdminDashboard() {
                 <motion.div key={d.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.03 }}>
                   <Card className="hover:shadow-md transition-shadow">
                     <CardContent className="p-4 flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold flex-shrink-0">{d.first_name?.[0]}</div>
+                      <div className="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center text-sky-600 font-bold flex-shrink-0">{d.first_name?.[0]}</div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm text-slate-800 truncate">Dr. {d.first_name} {d.last_name}</p>
                         <p className="text-xs text-slate-400 truncate">{d.specialization}</p>

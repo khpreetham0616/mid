@@ -133,12 +133,25 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req struct {
-		UserType string `json:"user_type" binding:"required"`
+		UserType string `json:"user_type"`
 		Email    string `json:"email" binding:"required,email"`
 		Password string `json:"password" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Auto-detect user type when not provided
+	if req.UserType == "" {
+		log.Printf("[login] auto-detect: email=%s", req.Email)
+		token, userType, user, err := h.authSvc.LoginAuto(req.Email, req.Password)
+		if err != nil {
+			log.Printf("[login] auto-detect error: %v", err)
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"token": token, "user_type": userType, "user": user})
 		return
 	}
 
