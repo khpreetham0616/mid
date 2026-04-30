@@ -9,7 +9,24 @@ $ROOT     = $PSScriptRoot
 $BACKEND  = Join-Path $ROOT "backend"
 $FRONTEND = Join-Path $ROOT "frontend"
 $PGBIN    = "C:\Program Files\PostgreSQL\17\bin"
+# Auto-detect psql location: prefer common v18 path, then v17, then any psql on PATH
+if (-not (Test-Path "$PGBIN\psql.exe")) {
+    $candidates = @(
+        "C:\Program Files\PostgreSQL\18\bin",
+        "C:\Program Files\PostgreSQL\17\bin"
+    )
+    foreach ($cand in $candidates) {
+        if (Test-Path (Join-Path $cand "psql.exe")) { $PGBIN = $cand; break }
+    }
+    if (-not (Test-Path "$PGBIN\psql.exe")) {
+        $rc = Get-Command "psql" -ErrorAction SilentlyContinue
+        if ($rc) { $PGBIN = Split-Path $rc.Source }
+    }
+}
 $PGUSER   = "postgres"
+$PGPASSWORD = "psql123"
+# Accept an external PGPWD environment variable if provided
+if ($env:PGPWD -and $env:PGPWD.Trim() -ne "") { $PGPASSWORD = $env:PGPWD }
 $DBNAME   = "mid_db"
 $LOGS     = Join-Path $BACKEND "logs"
 
@@ -42,11 +59,24 @@ function WaitForPort($port, $label, $timeoutSec = 90) {
 function StartHidden($logFile, [string]$cmd) {
     $null = New-Item -ItemType Directory -Force -Path $LOGS
     Clear-Content $logFile -ErrorAction SilentlyContinue
-    $escaped = $cmd -replace '"', '\"'
+    $escaped = $cmd -replace '"', '\\"'
     $proc = Start-Process powershell.exe `
         -ArgumentList "-ExecutionPolicy Bypass -NoProfile -Command `"$escaped`"" `
         -WindowStyle Hidden -PassThru
     return $proc
+}
+
+# Add a helper to launch interactive psql using the resolved password
+function Start-Psql([string]$db = $DBNAME) {
+    if (-not (Test-Path "$PGBIN\psql.exe")) {
+        Status "PGQL" "psql.exe not found at $PGBIN" $Y
+        return
+    }
+    # Choose the password: prefer resolved $PGPASS, fall back to $PGPASSWORD
+    $pw = if ($PGPASS) { $PGPASS } elseif ($PGPASSWORD) { $PGPASSWORD } else { $null }
+    if ($pw) { $env:PGPASSWORD = $pw } else { Remove-Item Env:\PGPASSWORD -ErrorAction SilentlyContinue }
+    Status "PGQL" "Launching interactive psql for user $PGUSER db $db..." $C
+    & "$PGBIN\psql.exe" -U $PGUSER -d $db
 }
 
 function TailLogs($logEntries) {
@@ -137,14 +167,19 @@ Pad
 # ---- 2. Resolve PG password ---------------------------------
 Status "BOOT" "Resolving ${C}PostgreSQL$RS credentials..." $Y
 
-function Test-PgPass($pwd) {
-    $env:PGPASSWORD = $pwd
+function Test-PgPass($candidate) {
+    $env:PGPASSWORD = $candidate
     $out = & "$PGBIN\psql.exe" -U $PGUSER -tc "SELECT 1;" 2>&1
     return ($out -match "1")
 }
 
 $PGPASS    = $null
 $connected = $false
+
+# Try external PGPWD env var first
+if ($env:PGPWD -and $env:PGPWD.Trim() -ne "") {
+    if (Test-PgPass $env:PGPWD) { $PGPASS = $env:PGPWD; $connected = $true }
+}
 
 # Try password already saved in .env
 $envFile = Join-Path $BACKEND ".env"
@@ -282,6 +317,8 @@ $prevTidy   = if (Test-Path $tidyMarker) { Get-Content $tidyMarker } else { "0" 
 if ($prevTidy -ne "$goModTime") {
     Status "BOOT" "Running ${C}go mod tidy$RS..." $Y
     Push-Location $BACKEND
+    $env:GOMODCACHE = "$env:USERPROFILE\go\pkg\mod"
+    $env:GOSUMDB = "off"
     $tidyOut = go mod tidy 2>&1
     Pop-Location
     if ($LASTEXITCODE -eq 0) {
@@ -306,14 +343,29 @@ $nodeModules = Join-Path $FRONTEND "node_modules"
 if ($prevNpm -ne "$pkgTime" -or -not (Test-Path $nodeModules)) {
     Status "BOOT" "Running ${M}npm install$RS..." $Y
     Push-Location $FRONTEND
-    npm install --legacy-peer-deps 2>&1 | Out-Null
+    # Capture npm output so we can detect known missing-module errors (e.g. ajv)
+    $npmOut = npm install --legacy-peer-deps 2>&1
+    $npmOutStr = $npmOut -join "`n"
     $npmExit = $LASTEXITCODE
+
+    # If install failed and output references ajv / missing module, try installing ajv@6 and retry
+    if ($npmExit -ne 0 -and $npmOutStr -match '(ajv|Cannot find module)') {
+        Status "DEPS" "Detected ajv/missing-module error; installing ajv@6 and retrying..." $Y
+        npm install ajv@6 --legacy-peer-deps 2>&1 | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            $npmOut = npm install --legacy-peer-deps 2>&1
+            $npmOutStr = $npmOut -join "`n"
+            $npmExit = $LASTEXITCODE
+        }
+    }
+
     Pop-Location
     if ($npmExit -eq 0) {
         "$pkgTime" | Set-Content $npmMarker
         Status "DEPS" "${G}npm packages installed$RS" $G
     } else {
-        Status "DEPS" "${R}npm install failed -- check frontend/package.json$RS" $R
+        Status "DEPS" "${R}npm install failed -- check frontend/package.json (npm output follows)$RS" $R
+        Write-Host $npmOutStr
         Pad; exit 1
     }
 } else {
@@ -323,7 +375,7 @@ Pad
 
 # ---- 7. Backend ---------------------------------------------
 Status "BOOT" "Starting ${B}Backend$RS in background (port 8080)..." $Y
-$beCmd  = "Set-Location '$BACKEND'; `$env:PGPASSWORD='$PGPASS'; go run ./cmd/main.go *>> '$beLog'"
+$beCmd  = "Set-Location '$BACKEND'; `$env:PGPASSWORD='$PGPASS'; `$env:GOMODCACHE='$env:USERPROFILE\go\pkg\mod'; `$env:GOSUMDB='off'; go run ./cmd/main.go *>> '$beLog'"
 $beProc = StartHidden $beLog $beCmd
 
 $ok = WaitForPort 8080 "Backend" 90
@@ -338,6 +390,8 @@ if (-not (Test-Path $seedMarker) -and $ok) {
     Status "BOOT" "Loading ${C}seed data$RS (doctors, hospitals, symptoms)..." $Y
     Push-Location $BACKEND
     $env:PGPASSWORD = $PGPASS
+    $env:GOMODCACHE = "$env:USERPROFILE\go\pkg\mod"
+    $env:GOSUMDB = "off"
     $seedOut = go run ./cmd/seed/main.go 2>&1
     Pop-Location
     if ($LASTEXITCODE -eq 0) {
