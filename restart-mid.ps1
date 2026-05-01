@@ -139,7 +139,7 @@ if ($killed -gt 0) {
     if ($closed) {
         Status "KILL" "${G}Backend stopped$RS  ($killed process(es) killed)" $G
     } else {
-        Status "KILL" "${R}Port 8080 still in use after kill — trying again...$RS" $R
+        Status "KILL" "${R}Port 8080 still in use after kill -- trying again...$RS" $R
         Kill-Port 8080
         Start-Sleep -Seconds 2
     }
