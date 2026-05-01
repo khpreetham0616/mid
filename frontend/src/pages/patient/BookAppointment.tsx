@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { doctorAPI, appointmentAPI } from '@/services/api';
+import { useAuth } from '@/context/AuthContext';
 import type { Doctor } from '@/types';
 
 const TIME_SLOTS = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00'];
@@ -15,6 +16,7 @@ const TIME_SLOTS = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00
 export default function BookAppointment() {
   const { doctorId } = useParams();
   const navigate = useNavigate();
+  const { userType, logout } = useAuth();
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
@@ -31,6 +33,10 @@ export default function BookAppointment() {
 
   const handleBook = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (userType !== 'patient') {
+      setError('Your session is not a patient account. Please sign out and sign in with your patient credentials.');
+      return;
+    }
     if (!time || !date) { setError('Please select date and time.'); return; }
     setLoading(true);
     setError('');
@@ -39,8 +45,13 @@ export default function BookAppointment() {
       await appointmentAPI.book({ doctor_id: doctorId, scheduled_at: scheduledAt, symptoms, notes, consult_fee: doctor?.consult_fee ?? 0 });
       navigate('/patient/appointments');
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: string } } };
-      setError(e.response?.data?.error ?? 'Booking failed.');
+      const e = err as { response?: { data?: { error?: string; your_role?: string } } };
+      const data = e.response?.data;
+      if (e.response?.status === 403) {
+        setError(`Session mismatch: your token has role "${data?.your_role ?? userType}" but "patient" is required. Please sign out and sign back in.`);
+      } else {
+        setError(data?.error ?? 'Booking failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -92,7 +103,19 @@ export default function BookAppointment() {
                 <Textarea className="mt-1.5" placeholder="Any other details for the doctor..." value={notes} onChange={e => setNotes(e.target.value)} rows={3} />
               </div>
 
-              {error && <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm"><i className="fas fa-exclamation-circle" />{error}</div>}
+              {error && (
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
+                  <div className="flex items-start gap-2">
+                    <i className="fas fa-exclamation-circle mt-0.5 flex-shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                  {error.includes('sign out') && (
+                    <button onClick={() => { logout(); navigate('/login'); }} className="mt-2 text-xs font-semibold underline text-red-700 hover:text-red-900">
+                      Sign out now →
+                    </button>
+                  )}
+                </div>
+              )}
 
               <Button type="submit" className="w-full" variant="gradient" size="lg" disabled={loading}>
                 {loading ? <><i className="fas fa-spinner fa-spin mr-2" />Booking...</> : <><i className="fas fa-calendar-check mr-2" />Confirm Booking</>}

@@ -25,28 +25,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem('mid_auth');
+    const stored = sessionStorage.getItem('mid_auth');
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
         if (parsed?.token && parsed?.userType) {
           setAuthUser(parsed);
         } else {
-          localStorage.removeItem('mid_auth');
+          sessionStorage.removeItem('mid_auth');
         }
-      } catch { localStorage.removeItem('mid_auth'); }
+      } catch { sessionStorage.removeItem('mid_auth'); }
     }
     setIsLoading(false);
   }, []);
 
   const login = (data: AuthUser) => {
     setAuthUser(data);
-    localStorage.setItem('mid_auth', JSON.stringify(data));
+    sessionStorage.setItem('mid_auth', JSON.stringify(data));
   };
 
   const logout = () => {
     setAuthUser(null);
-    localStorage.removeItem('mid_auth');
+    sessionStorage.removeItem('mid_auth');
   };
 
   return (

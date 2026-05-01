@@ -36,6 +36,13 @@ func RequireRole(roles ...services.UserType) gin.HandlerFunc {
 				return
 			}
 		}
-		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "forbidden: insufficient permissions"})
+		allowed := make([]string, len(roles))
+		for i, r := range roles {
+			allowed[i] = string(r)
+		}
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+			"error":    "forbidden: this action requires role " + allowed[0],
+			"your_role": string(userType),
+		})
 	}
 }

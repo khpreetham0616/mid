@@ -6,7 +6,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const stored = localStorage.getItem('mid_auth');
+  const stored = sessionStorage.getItem('mid_auth');
   if (stored) {
     try {
       const { token } = JSON.parse(stored);
@@ -20,7 +20,7 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      localStorage.removeItem('mid_auth');
+      sessionStorage.removeItem('mid_auth');
       window.location.href = '/login';
     }
     return Promise.reject(err);
