@@ -62,11 +62,10 @@ export default function DoctorAppointments() {
 
   const saveConsultation = async () => {
     if (!consultApt || !form.diagnosis.trim()) return;
+    const pmid = consultApt.patient?.mid;
+    if (!pmid) { setSavedMsg('Patient MID not found. Please refresh and try again.'); return; }
     setSaving(true);
     try {
-      const pmid = consultApt.patient?.mid;
-      if (!pmid) return;
-
       const recordRes = await doctorAPI.addRecord({
         patient_mid: pmid,
         record_type: 'consultation',
@@ -99,8 +98,9 @@ export default function DoctorAppointments() {
       setTimeout(() => { setConsultApt(null); setSavedMsg(''); }, 1500);
     } catch {
       setSavedMsg('Failed to save. Please try again.');
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const filter = (status: string) => status === 'all' ? appointments : appointments.filter(a => a.status === status);
