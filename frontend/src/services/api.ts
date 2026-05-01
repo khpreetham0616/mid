@@ -47,7 +47,7 @@ export const doctorAPI = {
   writePrescription: (data: Record<string, unknown>) => api.post('/doctor/prescriptions', data),
   myPrescriptions: () => api.get('/doctor/prescriptions'),
   updateAppointmentStatus: (id: string, status: string, notes?: string) =>
-    api.patch(`/appointments/${id}/status`, { status, doctor_notes: notes }),
+    api.patch(`/doctor/appointments/${id}/status`, { status, doctor_notes: notes }),
 };
 
 export const hospitalAPI = {
@@ -78,7 +78,7 @@ export const appointmentAPI = {
   getDoctorSlots: (doctorId: string, date?: string) =>
     api.get(`/appointments/doctor/${doctorId}`, { params: { date } }),
   updateStatus: (id: string, status: string, notes?: string) =>
-    api.patch(`/appointments/${id}/status`, { status, doctor_notes: notes }),
+    api.patch(`/patient/appointments/${id}/status`, { status, doctor_notes: notes }),
 };
 
 export const suggestionAPI = {

@@ -19,7 +19,7 @@ func NewAppointmentHandler(repo *repository.AppointmentRepo) *AppointmentHandler
 }
 
 func (h *AppointmentHandler) Book(c *gin.Context) {
-	patientID := c.MustGet("patient_id").(uuid.UUID)
+	patientID := c.MustGet("user_id").(uuid.UUID)
 
 	var req struct {
 		DoctorID    uuid.UUID `json:"doctor_id" binding:"required"`
