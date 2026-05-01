@@ -22,12 +22,13 @@ func (h *AppointmentHandler) Book(c *gin.Context) {
 	patientID := c.MustGet("user_id").(uuid.UUID)
 
 	var req struct {
-		DoctorID    uuid.UUID `json:"doctor_id" binding:"required"`
-		HospitalID  uuid.UUID `json:"hospital_id"`
-		ScheduledAt time.Time `json:"scheduled_at" binding:"required"`
-		Duration    int       `json:"duration_minutes"`
-		Symptoms    string    `json:"symptoms"`
-		Notes       string    `json:"notes"`
+		DoctorID    uuid.UUID  `json:"doctor_id" binding:"required"`
+		HospitalID  *uuid.UUID `json:"hospital_id"`
+		ScheduledAt time.Time  `json:"scheduled_at" binding:"required"`
+		Duration    int        `json:"duration_minutes"`
+		Symptoms    string     `json:"symptoms"`
+		Notes       string     `json:"notes"`
+		ConsultFee  float64    `json:"consult_fee"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -35,6 +36,11 @@ func (h *AppointmentHandler) Book(c *gin.Context) {
 	}
 	if req.Duration == 0 {
 		req.Duration = 30
+	}
+
+	// Treat zero UUID the same as absent
+	if req.HospitalID != nil && *req.HospitalID == uuid.Nil {
+		req.HospitalID = nil
 	}
 
 	conflict, err := h.repo.CheckConflict(req.DoctorID, req.ScheduledAt, req.Duration)
@@ -55,6 +61,7 @@ func (h *AppointmentHandler) Book(c *gin.Context) {
 		Duration:    req.Duration,
 		Symptoms:    req.Symptoms,
 		Notes:       req.Notes,
+		ConsultFee:  req.ConsultFee,
 		Status:      models.StatusPending,
 	}
 	if err := h.repo.Create(appt); err != nil {

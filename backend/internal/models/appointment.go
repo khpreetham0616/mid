@@ -20,7 +20,7 @@ type Appointment struct {
 	ID           uuid.UUID         `gorm:"type:uuid;primaryKey" json:"id"`
 	PatientID    uuid.UUID         `gorm:"type:uuid;not null" json:"patient_id"`
 	DoctorID     uuid.UUID         `gorm:"type:uuid;not null" json:"doctor_id"`
-	HospitalID   uuid.UUID         `gorm:"type:uuid" json:"hospital_id"`
+	HospitalID   *uuid.UUID        `gorm:"type:uuid" json:"hospital_id,omitempty"`
 	Patient      *Patient          `gorm:"foreignKey:PatientID" json:"patient,omitempty"`
 	Doctor       *Doctor           `gorm:"foreignKey:DoctorID" json:"doctor,omitempty"`
 	Hospital     *Hospital         `gorm:"foreignKey:HospitalID" json:"hospital,omitempty"`
