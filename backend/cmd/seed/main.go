@@ -8,6 +8,7 @@ import (
 	"github.com/mid/backend/internal/database"
 	"github.com/mid/backend/internal/models"
 	"github.com/mid/backend/internal/services"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -87,38 +88,40 @@ func seedHospitals(db *gorm.DB) {
 }
 
 func seedDoctors(db *gorm.DB) {
+	hashed, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
+
 	doctors := []models.Doctor{
 		{
 			MID: services.GenerateMID(services.EntityDoctor), FirstName: "Rajesh", LastName: "Kumar",
-			Email: "dr.rajesh@example.com", Phone: "+91-9000000001",
+			Email: "dr.rajesh@example.com", PasswordHash: string(hashed), Phone: "+91-9000000001",
 			Specialization: "Cardiologist", Qualification: "MBBS, MD, DM (Cardiology)",
 			ExperienceYrs: 15, ConsultFee: 800, Rating: 4.8, IsAvailable: true,
 			Bio: "Senior cardiologist with 15 years of experience in interventional cardiology.",
 		},
 		{
 			MID: services.GenerateMID(services.EntityDoctor), FirstName: "Priya", LastName: "Sharma",
-			Email: "dr.priya@example.com", Phone: "+91-9000000002",
+			Email: "dr.priya@example.com", PasswordHash: string(hashed), Phone: "+91-9000000002",
 			Specialization: "Neurologist", Qualification: "MBBS, MD, DM (Neurology)",
 			ExperienceYrs: 12, ConsultFee: 900, Rating: 4.7, IsAvailable: true,
 			Bio: "Expert neurologist specializing in epilepsy and stroke management.",
 		},
 		{
 			MID: services.GenerateMID(services.EntityDoctor), FirstName: "Anil", LastName: "Verma",
-			Email: "dr.anil@example.com", Phone: "+91-9000000003",
+			Email: "dr.anil@example.com", PasswordHash: string(hashed), Phone: "+91-9000000003",
 			Specialization: "Orthopedic", Qualification: "MBBS, MS (Ortho)",
 			ExperienceYrs: 18, ConsultFee: 700, Rating: 4.6, IsAvailable: true,
 			Bio: "Orthopedic surgeon specializing in joint replacement and sports injuries.",
 		},
 		{
 			MID: services.GenerateMID(services.EntityDoctor), FirstName: "Sunita", LastName: "Patel",
-			Email: "dr.sunita@example.com", Phone: "+91-9000000004",
+			Email: "dr.sunita@example.com", PasswordHash: string(hashed), Phone: "+91-9000000004",
 			Specialization: "Dermatologist", Qualification: "MBBS, MD (Dermatology)",
 			ExperienceYrs: 10, ConsultFee: 600, Rating: 4.5, IsAvailable: true,
 			Bio: "Dermatologist with expertise in skin allergies and cosmetic dermatology.",
 		},
 		{
 			MID: services.GenerateMID(services.EntityDoctor), FirstName: "Mohammed", LastName: "Ali",
-			Email: "dr.mohammed@example.com", Phone: "+91-9000000005",
+			Email: "dr.mohammed@example.com", PasswordHash: string(hashed), Phone: "+91-9000000005",
 			Specialization: "Pediatrician", Qualification: "MBBS, MD (Pediatrics)",
 			ExperienceYrs: 8, ConsultFee: 500, Rating: 4.9, IsAvailable: true,
 			Bio: "Child health specialist committed to providing compassionate pediatric care.",
