@@ -49,6 +49,10 @@ func main() {
 
 	r := routes.Setup(authH, doctorH, hospitalH, patientH, appointmentH, suggestionH, medicineH, adminH, authSvc)
 
+	for _, route := range r.Routes() {
+		log.Printf("ROUTE  %-7s %s", route.Method, route.Path)
+	}
+
 	log.Printf("MID Server starting on :%s", cfg.ServerPort)
 	if err := r.Run(":" + cfg.ServerPort); err != nil {
 		log.Fatalf("server error: %v", err)

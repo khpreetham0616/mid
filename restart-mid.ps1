@@ -37,11 +37,20 @@ function Kill-Port($port) {
         }
     }
     foreach ($p in $pids) {
-        try {
-            Stop-Process -Id $p -Force -ErrorAction SilentlyContinue
-        } catch { }
+        taskkill /PID $p /F 2>$null | Out-Null
+        Stop-Process -Id $p -Force -ErrorAction SilentlyContinue
     }
     return $pids.Count
+}
+
+function WaitForPortClosed($port, $timeoutSec = 10) {
+    $deadline = (Get-Date).AddSeconds($timeoutSec)
+    while ((Get-Date) -lt $deadline) {
+        $inUse = netstat -ano 2>$null | Select-String ":$port\s"
+        if (-not $inUse) { return $true }
+        Start-Sleep -Milliseconds 400
+    }
+    return $false
 }
 
 function WaitForPort($port, $label, $timeoutSec = 90) {
@@ -125,9 +134,15 @@ Pad
 # ---- 1. Kill Backend (8080) ---------------------------------
 Status "KILL" "Stopping backend on port ${C}8080$RS..." $Y
 $killed = Kill-Port 8080
-Start-Sleep -Milliseconds 800
 if ($killed -gt 0) {
-    Status "KILL" "${G}Backend stopped$RS  ($killed process(es) killed)" $G
+    $closed = WaitForPortClosed 8080 10
+    if ($closed) {
+        Status "KILL" "${G}Backend stopped$RS  ($killed process(es) killed)" $G
+    } else {
+        Status "KILL" "${R}Port 8080 still in use after kill — trying again...$RS" $R
+        Kill-Port 8080
+        Start-Sleep -Seconds 2
+    }
 } else {
     Status "KILL" "${D}No backend process found on :8080$RS" $D
 }
@@ -135,8 +150,8 @@ if ($killed -gt 0) {
 # ---- 2. Kill Frontend (3000) --------------------------------
 Status "KILL" "Stopping frontend on port ${M}3000$RS..." $Y
 $killed = Kill-Port 3000
-Start-Sleep -Milliseconds 800
 if ($killed -gt 0) {
+    WaitForPortClosed 3000 8 | Out-Null
     Status "KILL" "${G}Frontend stopped$RS  ($killed process(es) killed)" $G
 } else {
     Status "KILL" "${D}No frontend process found on :3000$RS" $D
